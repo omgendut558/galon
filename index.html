@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplikasi Pencatatan Pemasukan dan Pengeluaran Depot Air Galon Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database dan CRUD.">
+  <title>AquaFlow - Catatan Keuangan Depot Air Galon</title>
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- CDN Libraries -->
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Chart.js for Data Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS for Excel XLSX Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Print Only Header -->
+  <div class="print-report-header" style="display: none;">
+    <h2>LAPORAN KEUANGAN DEPOT AIR MINUM GALON</h2>
+    <p id="printPeriodDesc">Periode Laporan: -</p>
+  </div>
+
+  <!-- Header & Navigation Bar -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i data-lucide="droplets"></i>
+        </div>
+        <div>
+          <div class="brand-title heading-font">
+            Aqua<span>Flow</span>
+            <span class="brand-badge">PRO DEPOT</span>
+          </div>
+          <div class="brand-subtitle">Catatan Keuangan & Kasir Depot Galon</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live Date & Clock -->
+        <div class="current-datetime">
+          <i data-lucide="clock" style="width: 14px; height: 14px; color: var(--primary-500);"></i>
+          <span id="currentDateText">-</span>
+        </div>
+
+        <!-- Database Connection Indicator Pill -->
+        <div id="dbStatusPill" class="db-status-pill" title="Klik untuk pengaturan Supabase / Local DB">
+          <span id="statusDot" class="status-dot offline"></span>
+          <span id="dbStatusText">Local Storage</span>
+          <i data-lucide="database" style="width: 13px; height: 13px;"></i>
+        </div>
+
+        <!-- Theme Switcher -->
+        <button id="themeToggleBtn" class="btn btn-outline btn-icon" title="Ganti Mode Gelap/Terang">
+          <i data-lucide="moon"></i>
+        </button>
+
+        <!-- Help / Guide Modal Button -->
+        <button class="btn btn-outline btn-icon" title="Panduan Supabase & Bantuan" onclick="openModal('helpModal')">
+          <i data-lucide="help-circle"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="container" style="flex: 1;">
+
+    <!-- Quick Cashier Shortcuts Bar -->
+    <section class="quick-cashier-section">
+      <div class="quick-bar">
+        <div class="quick-bar-info">
+          <div class="quick-bar-icon">
+            <i data-lucide="zap"></i>
+          </div>
+          <div class="quick-bar-text">
+            <h4>Kasir Cepat Depot</h4>
+            <p>Klik 1-kali untuk mencatat transaksi penjualan galon secara instan</p>
+          </div>
+        </div>
+
+        <div class="quick-btn-group">
+          <button class="btn-quick" data-quick-action="refill-1">
+            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+            <span>1 Isi Ulang</span>
+            <span class="price-tag">(Rp 6.000)</span>
+          </button>
+          <button class="btn-quick" data-quick-action="refill-5">
+            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+            <span>5 Isi Ulang</span>
+            <span class="price-tag">(Rp 30.000)</span>
+          </button>
+          <button class="btn-quick" data-quick-action="refill-10">
+            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+            <span>10 Isi Ulang</span>
+            <span class="price-tag">(Rp 60.000)</span>
+          </button>
+          <button class="btn-quick" data-quick-action="new-1">
+            <i data-lucide="package-plus" style="width: 14px; height: 14px;"></i>
+            <span>1 Galon Baru</span>
+            <span class="price-tag">(Rp 45.000)</span>
+          </button>
+          <button id="btnOpenAddTxModal" class="btn btn-primary btn-sm">
+            <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
+            <span>+ Transaksi Kustom</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Summary Cards Grid -->
+    <section class="stats-grid">
+      <!-- Total Income -->
+      <div class="kpi-card income">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Pemasukan</span>
+          <div class="kpi-icon-wrap">
+            <i data-lucide="arrow-down-left"></i>
+          </div>
+        </div>
+        <div id="kpiTotalIncome" class="kpi-value heading-font">Rp 0</div>
+        <div class="kpi-footer">
+          <span>Pemasukan penjualan galon & lain-lain</span>
+          <span class="kpi-tag" style="color: var(--success-600);">Masuk</span>
+        </div>
+      </div>
+
+      <!-- Total Expense -->
+      <div class="kpi-card expense">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Pengeluaran</span>
+          <div class="kpi-icon-wrap">
+            <i data-lucide="arrow-up-right"></i>
+          </div>
+        </div>
+        <div id="kpiTotalExpense" class="kpi-value heading-font">Rp 0</div>
+        <div class="kpi-footer">
+          <span>Air baku, listrik, tutup, operasional</span>
+          <span class="kpi-tag" style="color: var(--danger-600);">Keluar</span>
+        </div>
+      </div>
+
+      <!-- Net Profit -->
+      <div class="kpi-card profit">
+        <div class="kpi-header">
+          <span class="kpi-title">Laba Bersih (Keuntungan)</span>
+          <div class="kpi-icon-wrap">
+            <i data-lucide="wallet"></i>
+          </div>
+        </div>
+        <div id="kpiNetProfit" class="kpi-value heading-font">Rp 0</div>
+        <div class="kpi-footer">
+          <span>Pemasukan dikurangi pengeluaran</span>
+          <span class="kpi-tag" style="color: var(--primary-600);">Profit</span>
+        </div>
+      </div>
+
+      <!-- Total Gallons Sold -->
+      <div class="kpi-card volume">
+        <div class="kpi-header">
+          <span class="kpi-title">Volume Galon Terjual</span>
+          <div class="kpi-icon-wrap">
+            <i data-lucide="cylinder"></i>
+          </div>
+        </div>
+        <div id="kpiTotalGallons" class="kpi-value heading-font">0 Galon</div>
+        <div class="kpi-footer">
+          <span id="kpiTxCount">0 transaksi</span>
+          <span id="kpiAvgSales" class="kpi-tag">Rp 0 /hari</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Dimensional Filter Control Panel -->
+    <section class="filter-panel">
+      <div class="filter-panel-header">
+        <div class="filter-heading">
+          <i data-lucide="sliders-horizontal" style="color: var(--primary-500); width: 18px; height: 18px;"></i>
+          <span>Filter Periode Waktu & Kategori</span>
+          <span id="activeFilterDescriptionBadge" class="active-filter-badge">Periode: Bulan Ini</span>
+        </div>
+
+        <!-- Mode Waktu Selector Tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab-btn active" data-mode="quick">
+            <i data-lucide="clock" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Cepat
+          </button>
+          <button class="filter-tab-btn" data-mode="date">
+            <i data-lucide="calendar" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Tanggal
+          </button>
+          <button class="filter-tab-btn" data-mode="day">
+            <i data-lucide="calendar-days" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Hari
+          </button>
+          <button class="filter-tab-btn" data-mode="month">
+            <i data-lucide="calendar-range" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Bulan
+          </button>
+          <button class="filter-tab-btn" data-mode="year">
+            <i data-lucide="history" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Tahun
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Controls Inputs Grid -->
+      <div class="filter-controls-grid">
+        <!-- 1. Quick Preset Dropdown -->
+        <div id="quickPresetWrap" class="form-group">
+          <label class="form-label">Preset Periode Cepat</label>
+          <select id="filterQuickPreset" class="form-select">
+            <option value="today">Hari Ini</option>
+            <option value="yesterday">Kemarin</option>
+            <option value="last7days">7 Hari Terakhir</option>
+            <option value="thisMonth" selected>Bulan Ini</option>
+            <option value="lastMonth">Bulan Lalu</option>
+            <option value="thisYear">Tahun Ini</option>
+            <option value="all">Semua Waktu (Semua Data)</option>
+          </select>
+        </div>
+
+        <!-- 2. Date Range Inputs (Hidden by default, shown when mode = 'date') -->
+        <div id="dateRangeWrap" style="display: none; grid-column: span 2; display: none; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Dari Tanggal</label>
+            <input type="date" id="filterStartDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sampai Tanggal</label>
+            <input type="date" id="filterEndDate" class="form-control">
+          </div>
+        </div>
+
+        <!-- 3. Month & Year Select (Hidden by default, shown when mode = 'month' or 'year') -->
+        <div id="monthYearWrap" style="display: none; grid-column: span 2; display: none; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div id="monthSelectGroup" class="form-group">
+            <label class="form-label">Pilih Bulan</label>
+            <select id="filterMonthSelect" class="form-select">
+              <option value="1">Januari</option>
+              <option value="2">Februari</option>
+              <option value="3">Maret</option>
+              <option value="4">April</option>
+              <option value="5">Mei</option>
+              <option value="6">Juni</option>
+              <option value="7">Juli</option>
+              <option value="8" selected>Agustus</option>
+              <option value="9">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+              <option value="12">Desember</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pilih Tahun</label>
+            <select id="filterYearSelect" class="form-select">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. Category Filter -->
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select id="filterCategorySelect" class="form-select">
+            <option value="all">Semua Kategori</option>
+          </select>
+        </div>
+
+        <!-- 5. Payment Method Filter -->
+        <div class="form-group">
+          <label class="form-label">Metode Bayar</label>
+          <select id="filterPaymentSelect" class="form-select">
+            <option value="all">Semua Metode</option>
+            <option value="Tunai">Tunai</option>
+            <option value="QRIS">QRIS</option>
+            <option value="Transfer Bank">Transfer Bank</option>
+          </select>
+        </div>
+
+        <!-- 6. Search Input -->
+        <div class="form-group">
+          <label class="form-label">Cari Catatan / Pelanggan</label>
+          <input type="text" id="filterSearchInput" class="form-control" placeholder="Ketik nama / catatan...">
+        </div>
+
+        <!-- Reset Button -->
+        <div class="form-group" style="justify-content: flex-end;">
+          <button id="btnResetFilter" class="btn btn-outline" style="width: 100%;">
+            <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i> Reset Filter
+          </button>
+        </div>
+      </div>
+
+      <!-- Day of Week Quick Filter Pill Group (Shown when mode = 'day') -->
+      <div id="dayFilterWrap" style="display: none;" class="days-filter-group">
+        <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); align-self: center; margin-right: 0.35rem;">PILIH HARI:</span>
+        <button class="day-pill-btn active" data-day="all">Semua Hari</button>
+        <button class="day-pill-btn" data-day="Senin">Senin</button>
+        <button class="day-pill-btn" data-day="Selasa">Selasa</button>
+        <button class="day-pill-btn" data-day="Rabu">Rabu</button>
+        <button class="day-pill-btn" data-day="Kamis">Kamis</button>
+        <button class="day-pill-btn" data-day="Jumat">Jumat</button>
+        <button class="day-pill-btn" data-day="Sabtu">Sabtu</button>
+        <button class="day-pill-btn" data-day="Minggu">Minggu</button>
+      </div>
+    </section>
+
+    <!-- Gallon Inventory Tracker Card -->
+    <section class="inventory-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="boxes" style="color: var(--primary-500); width: 18px; height: 18px;"></i>
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Status Stok Galon Depot</h4>
+        </div>
+        <button id="btnEditInventory" class="btn btn-outline btn-sm">
+          <i data-lucide="edit-2" style="width: 13px; height: 13px;"></i> Kelola Stok & Harga
+        </button>
+      </div>
+
+      <div class="inventory-items-grid">
+        <div class="inventory-item filled">
+          <div class="inventory-icon"><i data-lucide="droplet"></i></div>
+          <div class="inventory-info">
+            <h5>Galon Siap Jual (Isi)</h5>
+            <div id="stockFilledDisplay" class="count heading-font">0 Galon</div>
+          </div>
+        </div>
+        <div class="inventory-item empty">
+          <div class="inventory-icon"><i data-lucide="disc"></i></div>
+          <div class="inventory-info">
+            <h5>Galon Kosong (Siap Isi)</h5>
+            <div id="stockEmptyDisplay" class="count heading-font">0 Galon</div>
+          </div>
+        </div>
+        <div class="inventory-item borrowed">
+          <div class="inventory-icon"><i data-lucide="users"></i></div>
+          <div class="inventory-info">
+            <h5>Galon Dipinjam / Pelanggan</h5>
+            <div id="stockBorrowedDisplay" class="count heading-font">0 Galon</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics & Charts Grid -->
+    <section class="charts-grid">
+      <!-- Main Trend Line Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <i data-lucide="trending-up" style="color: var(--primary-500);"></i>
+            <span>Tren Keuangan (Pemasukan vs Pengeluaran)</span>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="trendChartCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Category Breakdown Doughnut Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div id="categoryChartTitle" class="chart-title">
+            <i data-lucide="pie-chart" style="color: var(--primary-500);"></i>
+            <span>Komposisi Kategori</span>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="categoryChartCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Table & CRUD Section -->
+    <section class="table-section">
+      <div class="table-action-bar">
+        <div class="table-title-group">
+          <i data-lucide="receipt" style="color: var(--primary-500);"></i>
+          <h3 class="table-title">Riwayat Catatan Transaksi</h3>
+          <span id="tableCountBadge" class="table-count-badge">0 Data</span>
+        </div>
+
+        <!-- Type Filter Tabs (Semua / Pemasukan / Pengeluaran) -->
+        <div class="filter-tabs">
+          <button class="filter-tab-btn type-filter-btn active" data-type="all">Semua</button>
+          <button class="filter-tab-btn type-filter-btn" data-type="pemasukan">Pemasukan (+)</button>
+          <button class="filter-tab-btn type-filter-btn" data-type="pengeluaran">Pengeluaran (-)</button>
+        </div>
+
+        <!-- Action Buttons (Add, Export, Print) -->
+        <div class="table-buttons-group">
+          <button id="btnExportExcel" class="btn btn-outline btn-sm" title="Ekspor ke spreadsheet Excel">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--success-600);"></i> Excel
+          </button>
+          <button id="btnExportCSV" class="btn btn-outline btn-sm" title="Ekspor ke CSV">
+            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> CSV
+          </button>
+          <button id="btnPrintReport" class="btn btn-outline btn-sm" title="Cetak Laporan / PDF">
+            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Cetak Laporan
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openTransactionModal()">
+            <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> Tambah Transaksi
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Data Table -->
+      <div class="table-responsive">
+        <table id="transactionsTable" class="data-table">
+          <thead>
+            <tr>
+              <th>Tanggal & Waktu</th>
+              <th>Kategori</th>
+              <th style="text-align: center;">Jumlah Galon</th>
+              <th>Harga Satuan</th>
+              <th>Total Nominal</th>
+              <th>Metode Bayar</th>
+              <th>Pelanggan / Keterangan</th>
+              <th style="text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTableBody">
+            <!-- Dynamically populated by app.js -->
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div id="tableEmptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon"><i data-lucide="inbox"></i></div>
+          <h4 class="empty-title">Belum Ada Transaksi Tercatat</h4>
+          <p class="empty-desc">Tidak ada data transaksi yang cocok dengan filter yang dipilih. Tambahkan transaksi baru atau ganti filter periode waktu.</p>
+          <button id="btnOpenAddTxEmpty" class="btn btn-primary">
+            <i data-lucide="plus-circle"></i> Catat Transaksi Baru
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Footer with Pagination -->
+      <div id="tableFooter" class="table-footer">
+        <span id="paginationInfo">Menampilkan 1-10 dari 0 data</span>
+        <div class="pagination-controls">
+          <button id="btnPrevPage" class="btn btn-outline btn-sm" disabled>
+            <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i> Sebelumnya
+          </button>
+          <button id="btnNextPage" class="btn btn-outline btn-sm">
+            Selanjutnya <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="container">
+      <p><strong>AquaFlow</strong> &copy; 2026 - Sistem Manajemen Keuangan & Kasir Depot Air Galon. Terhubung dengan Database Supabase & Siap Deploy ke Vercel.</p>
+    </div>
+  </footer>
+
+  <!-- ========================================================================
+       MODALS
+       ======================================================================== -->
+
+  <!-- 1. MODAL TAMBAH / EDIT TRANSAKSI -->
+  <div id="transactionModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="txModalTitle" class="modal-title">
+          <i data-lucide="plus-circle"></i> Tambah Transaksi
+        </h3>
+        <button class="modal-close" onclick="closeModal('transactionModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="transactionForm">
+        <div class="modal-body">
+          <!-- Type Switcher (Pemasukan vs Pengeluaran) -->
+          <div class="type-switch-group">
+            <input type="radio" id="typeIncome" name="txType" value="pemasukan" class="type-switch-input" checked>
+            <label for="typeIncome" class="type-switch-label income-label">
+              <i data-lucide="arrow-down-left"></i> Pemasukan
+            </label>
+
+            <input type="radio" id="typeExpense" name="txType" value="pengeluaran" class="type-switch-input">
+            <label for="typeExpense" class="type-switch-label expense-label">
+              <i data-lucide="arrow-up-right"></i> Pengeluaran
+            </label>
+          </div>
+
+          <!-- Date & Time Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label">Tanggal Transaksi *</label>
+              <input type="date" id="txDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Waktu / Jam</label>
+              <input type="time" id="txTime" class="form-control">
+            </div>
+          </div>
+
+          <!-- Category Selection -->
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Kategori Transaksi *</label>
+            <select id="txCategory" class="form-select" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+
+          <!-- Qty & Unit Price Row (For Income/Gallons) -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <div id="txQtyGroup" class="form-group">
+              <label class="form-label">Jumlah Galon (Qty)</label>
+              <input type="number" id="txQty" class="form-control" min="0" value="1" placeholder="0">
+            </div>
+            <div id="txUnitPriceGroup" class="form-group">
+              <label class="form-label">Harga Satuan (Rp)</label>
+              <input type="number" id="txUnitPrice" class="form-control" min="0" step="500" value="6000" placeholder="6000">
+            </div>
+          </div>
+
+          <!-- Amount Highlight Box -->
+          <div class="calc-highlight">
+            <span class="calc-title">Total Nominal:</span>
+            <span id="txCalcDisplay" class="calc-result">Rp 6.000</span>
+          </div>
+
+          <!-- Direct Amount Input (Hidden or Manual Override) -->
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Nominal Uang (Rp) *</label>
+            <input type="number" id="txAmount" class="form-control" min="1" step="500" required placeholder="Contoh: 6000">
+          </div>
+
+          <!-- Payment Method -->
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Metode Pembayaran</label>
+            <select id="txPaymentMethod" class="form-select">
+              <option value="Tunai">Tunai / Cash</option>
+              <option value="QRIS">QRIS</option>
+              <option value="Transfer Bank">Transfer Bank</option>
+              <option value="Hutang / Titip">Hutang / Titip</option>
+            </select>
+          </div>
+
+          <!-- Customer Name & Notes -->
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Nama Pelanggan / Vendor (Opsional)</label>
+            <input type="text" id="txCustomer" class="form-control" placeholder="Contoh: Bu Siti / Toko Barokah">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan / Keterangan</label>
+            <input type="text" id="txNotes" class="form-control" placeholder="Contoh: Pengantaran blok C no 4">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('transactionModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="check"></i> Simpan Transaksi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL KONFIRMASI HAPUS -->
+  <div id="deleteModal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--danger-600);">
+          <i data-lucide="alert-triangle"></i> Hapus Transaksi?
+        </h3>
+        <button class="modal-close" onclick="closeModal('deleteModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Apakah Anda yakin ingin menghapus data transaksi ini? Data yang telah dihapus tidak dapat dipulihkan.
+        </p>
+        <div id="deleteTxDetails" style="background-color: var(--bg-muted); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.82rem;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('deleteModal')">Batal</button>
+        <button type="button" id="btnConfirmDelete" class="btn" style="background-color: var(--danger-600); color: white;">
+          <i data-lucide="trash-2"></i> Ya, Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MODAL KELOLA INVENTARIS & HARGA STOK GALON -->
+  <div id="inventoryModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i data-lucide="boxes"></i> Kelola Stok & Pengaturan Harga
+        </h3>
+        <button class="modal-close" onclick="closeModal('inventoryModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="inventoryForm">
+        <div class="modal-body">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase; margin-bottom: 0.75rem;">
+            1. Jumlah Stok Fisik Galon di Depot
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label class="form-label">Galon Isi (Siap Jual)</label>
+              <input type="number" id="invStockFilled" class="form-control" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Galon Kosong</label>
+              <input type="number" id="invStockEmpty" class="form-control" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Galon Dipinjam</label>
+              <input type="number" id="invStockBorrowed" class="form-control" min="0" required>
+            </div>
+          </div>
+
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase; margin-bottom: 0.75rem;">
+            2. Harga Standar Depot
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Harga Isi Ulang (Rp)</label>
+              <input type="number" id="invRefillPrice" class="form-control" min="0" step="500" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Harga Galon Baru + Isi (Rp)</label>
+              <input type="number" id="invNewPrice" class="form-control" min="0" step="500" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('inventoryModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="check"></i> Simpan Pengaturan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. MODAL KONFIGURASI SUPABASE DATABASE & BACKUP -->
+  <div id="databaseModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i data-lucide="database"></i> Pengaturan Database Supabase
+        </h3>
+        <button class="modal-close" onclick="closeModal('databaseModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="dbConfigForm">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Hubungkan aplikasi dengan database cloud <strong>Supabase</strong> agar catatan keuangan tersimpan secara permanen dan dapat diakses dari mana saja.
+          </p>
+
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Supabase Project URL</label>
+            <input type="url" id="supabaseUrlInput" class="form-control" placeholder="https://xyzcompany.supabase.co">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Supabase Anon Key</label>
+            <input type="password" id="supabaseKeyInput" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <button type="button" id="btnTestDbConnection" class="btn btn-outline btn-sm">
+              <i data-lucide="activity"></i> Tes Koneksi
+            </button>
+            <button type="button" id="btnSyncCloud" class="btn btn-outline btn-sm" title="Upload data dari browser lokal ke Supabase">
+              <i data-lucide="upload-cloud"></i> Sinkronkan Data Lokal ke Cloud
+            </button>
+            <button type="button" id="btnUseLocalDb" class="btn btn-outline btn-sm" title="Gunakan mode offline LocalStorage">
+              <i data-lucide="hard-drive"></i> Mode Lokal
+            </button>
+          </div>
+
+          <div id="dbTestResult" style="margin-bottom: 1rem;"></div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
+
+          <!-- Backup & Restore Section -->
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
+            Cadangkan / Pulihkan Data Lokal (JSON)
+          </h4>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" id="btnBackupJson" class="btn btn-outline btn-sm">
+              <i data-lucide="download"></i> Unduh Cadangan (Backup JSON)
+            </button>
+            <label class="btn btn-outline btn-sm" style="margin: 0; cursor: pointer;">
+              <i data-lucide="upload"></i> Pulihkan dari JSON
+              <input type="file" id="fileRestoreInput" accept=".json" style="display: none;">
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('databaseModal')">Tutup</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="save"></i> Simpan Konfigurasi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. MODAL PANDUAN & BANTUAN SUPABASE -->
+  <div id="helpModal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i data-lucide="book-open"></i> Panduan Setup Supabase & Deploy Vercel
+        </h3>
+        <button class="modal-close" onclick="closeModal('helpModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="font-size: 0.88rem; line-height: 1.6;">
+        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
+          1. Cara Menyiapkan Database di Supabase
+        </h4>
+        <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+          <li>Buka <a href="https://supabase.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">supabase.com</a> dan buat akun / proyek baru gratis.</li>
+          <li>Masuk ke menu <strong>SQL Editor</strong> di sidebar dashboard Supabase.</li>
+          <li>Klik <strong>New Query</strong>, lalu salin dan jalankan seluruh isi file <code>supabase_schema.sql</code> yang sudah disediakan di folder proyek ini.</li>
+          <li>Buka <strong>Project Settings -> API</strong>, lalu salin <code>Project URL</code> dan <code>anon public API key</code>.</li>
+          <li>Masukkan kedua nilai tersebut ke dalam modal <strong>Pengaturan Database</strong> di aplikasi ini.</li>
+        </ol>
+
+        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
+          2. Cara Deploy ke Vercel (1-Click)
+        </h4>
+        <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+          <li>Unggah folder proyek ini ke akun GitHub Anda.</li>
+          <li>Buka <a href="https://vercel.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">vercel.com</a>, lalu klik <strong>Add New... -> Project</strong>.</li>
+          <li>Pilih repository GitHub Anda dan klik <strong>Deploy</strong> (Tanpa konfigurasi khusus, file <code>vercel.json</code> sudah otomatis aktif).</li>
+        </ol>
+
+        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
+          3. Fitur Filter Waktu Lengkap
+        </h4>
+        <p style="color: var(--text-muted);">
+          Gunakan filter di dashboard untuk melihat rekapitulasi data berdasarkan <strong>Hari</strong> (misal performa penjualan tiap hari Sabtu/Minggu), <strong>Bulan</strong>, <strong>Tahun</strong>, atau <strong>Rentang Tanggal Kustom</strong>.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeModal('helpModal')">Mengerti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Application Environment & Logic Scripts -->
+  <script src="env.js"></script>
+  <script src="js/filter.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

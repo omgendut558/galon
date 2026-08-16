@@ -1,0 +1,21 @@
+{
+  "name": "aquaflow-galon-app",
+  "version": "1.0.0",
+  "description": "Aplikasi Catatan Pemasukan dan Pengeluaran Depot Air Galon berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase CRUD & Deploy Vercel",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "galon",
+    "depot-air",
+    "pencatatan-keuangan",
+    "kasir",
+    "supabase",
+    "vercel",
+    "crud"
+  ],
+  "author": "AquaFlow Team",
+  "license": "MIT"
+}
