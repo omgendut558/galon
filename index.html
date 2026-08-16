@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Aplikasi Pencatatan & Manajemen Stok Galon Depot Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database dan CRUD.">
+  <meta name="description" content="Aplikasi Pencatatan & Manajemen Stok Galon Depot Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database, Autentikasi Login, dan CRUD.">
   <title>AquaFlow - Catatan & Mutasi Stok Galon Depot</title>
   
   <!-- Stylesheets -->
@@ -20,6 +20,72 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+
+  <!-- Fullscreen Auth Screen Overlay (Login / Register Gatekeeper) -->
+  <div id="authOverlay" class="auth-overlay active">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <i data-lucide="boxes"></i>
+        </div>
+        <h2 class="auth-title">Aqua<span>Flow</span></h2>
+        <p class="auth-subtitle">Sistem Manajemen & Stok Depot Air Galon</p>
+      </div>
+
+      <!-- Auth Tab Switcher (Masuk vs Daftar) -->
+      <div class="auth-tabs">
+        <button type="button" id="tabLogin" class="auth-tab-btn active">Masuk (Login)</button>
+        <button type="button" id="tabRegister" class="auth-tab-btn">Daftar Akun</button>
+      </div>
+
+      <div class="auth-body">
+        <!-- Alert Box -->
+        <div id="authAlert" class="auth-alert"></div>
+
+        <!-- Login / Register Form -->
+        <form id="authForm">
+          <!-- Name Input (Only shown on register) -->
+          <div id="authNameGroup" class="form-group" style="display: none; margin-bottom: 0.85rem;">
+            <label class="form-label">Nama Lengkap / Nama Depot *</label>
+            <input type="text" id="authNameInput" class="form-control" placeholder="Contoh: Depot Air Sejahtera">
+          </div>
+
+          <!-- Email Input -->
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">Alamat Email *</label>
+            <input type="email" id="authEmailInput" class="form-control" required placeholder="admin@depotair.com">
+          </div>
+
+          <!-- Password Input -->
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label">Password *</label>
+            <div class="password-input-wrap">
+              <input type="password" id="authPasswordInput" class="form-control" required placeholder="Minimal 6 karakter" minlength="6">
+              <button type="button" id="btnTogglePassword" class="toggle-password-btn" title="Lihat Password">
+                <i data-lucide="eye" id="eyeIcon" style="width: 15px; height: 15px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="btnAuthSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem;">
+            <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
+            <span id="btnAuthSubmitText">Masuk ke Dashboard</span>
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <span>atau</span>
+        </div>
+
+        <!-- Guest / Offline Demo Login Button -->
+        <button type="button" id="btnGuestLogin" class="btn-guest" title="Gunakan langsung tanpa email Supabase">
+          <i data-lucide="user-check" style="width: 15px; height: 15px;"></i>
+          <span>Masuk Mode Offline / Tamu</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Print Only Header -->
   <div class="print-report-header" style="display: none;">
@@ -55,6 +121,18 @@
           <span id="statusDot" class="status-dot offline"></span>
           <span id="dbStatusText">Local Storage</span>
           <i data-lucide="database" style="width: 13px; height: 13px;"></i>
+        </div>
+
+        <!-- User Authentication Profile Pill & Logout -->
+        <div id="userProfileWrap" class="user-profile-group" style="display: none;">
+          <div class="user-profile-pill" title="Akun Pengguna Aktif">
+            <span id="userAvatar" class="user-avatar">AD</span>
+            <span id="userNameText" class="user-name-text">Admin Depot</span>
+          </div>
+          <button id="btnLogout" class="btn-logout" title="Keluar dari Akun">
+            <i data-lucide="log-out" style="width: 13px; height: 13px;"></i>
+            <span>Keluar</span>
+          </button>
         </div>
 
         <!-- Theme Switcher -->
@@ -705,7 +783,7 @@
 
       <div class="modal-body" style="font-size: 0.88rem; line-height: 1.6;">
         <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
-          1. Cara Menyiapkan Database di Supabase
+          1. Cara Menyiapkan Database & Autentikasi di Supabase
         </h4>
         <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
           <li>Buka <a href="https://supabase.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">supabase.com</a> dan buat akun / proyek baru gratis.</li>
@@ -713,6 +791,7 @@
           <li>Klik <strong>New Query</strong>, lalu salin dan jalankan seluruh isi file <code>supabase_schema.sql</code> yang ada di folder proyek ini.</li>
           <li>Buka <strong>Project Settings -> API</strong>, lalu salin <code>Project URL</code> dan <code>anon public API key</code>.</li>
           <li>Masukkan kedua nilai tersebut ke dalam modal <strong>Pengaturan Database</strong> di aplikasi ini atau di file <code>env.js</code>.</li>
+          <li>Buka <strong>Authentication -> Providers -> Email</strong> di Supabase: Anda dapat menonaktifkan <em>Confirm email</em> agar registrasi akun baru bisa langsung login seketika.</li>
         </ol>
 
         <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
@@ -745,6 +824,7 @@
   <script src="env.js"></script>
   <script src="js/filter.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>

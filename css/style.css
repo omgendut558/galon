@@ -1317,6 +1317,295 @@ body {
     background-color: #f2f2f2 !important;
     color: #000000 !important;
   }
+}
+
+/* ==============================================================================
+   AUTHENTICATION & USER PROFILE STYLES
+   ============================================================================== */
+
+/* User Profile in Header */
+.user-profile-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-profile-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.6rem 0.25rem 0.35rem;
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-500), var(--purple-500));
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.user-name-text {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--danger-600);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-logout:hover {
+  background-color: var(--danger-50);
+  border-color: var(--danger-500);
+}
+
+[data-theme="dark"] .btn-logout:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* Fullscreen Auth Overlay / Modal */
+.auth-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-normal);
+}
+
+.auth-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.auth-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--modal-shadow);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  transform: scale(0.95) translateY(10px);
+  transition: transform var(--transition-normal);
+  position: relative;
+}
+
+.auth-overlay.active .auth-card {
+  transform: scale(1) translateY(0);
+}
+
+.auth-header {
+  padding: 2rem 2rem 1.25rem 2rem;
+  text-align: center;
+  background: linear-gradient(180deg, var(--primary-50), transparent);
+}
+
+[data-theme="dark"] .auth-header {
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.1), transparent);
+}
+
+.auth-logo {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 0.85rem auto;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.7rem;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+}
+
+.auth-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.auth-title span {
+  color: var(--primary-500);
+}
+
+.auth-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 1.75rem 1.25rem 1.75rem;
+  background-color: var(--bg-muted);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+}
+
+.auth-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 0.55rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.auth-tab-btn.active {
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.auth-body {
+  padding: 0 2rem 2rem 2rem;
+}
+
+.auth-alert {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-alert.error {
+  display: flex;
+  background-color: var(--danger-50);
+  border: 1px solid var(--danger-100);
+  color: var(--danger-700);
+}
+
+[data-theme="dark"] .auth-alert.error {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.auth-alert.success {
+  display: flex;
+  background-color: var(--success-50);
+  border: 1px solid var(--success-100);
+  color: var(--success-700);
+}
+
+[data-theme="dark"] .auth-alert.success {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  padding-right: 2.5rem;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.toggle-password-btn:hover {
+  color: var(--text-main);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.25rem 0;
+  color: var(--text-subtle);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.auth-divider span {
+  padding: 0 0.75rem;
+}
+
+.btn-guest {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background-color: var(--bg-muted);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-guest:hover {
+  background-color: var(--bg-surface-elevated);
+  border-color: var(--primary-500);
+  color: var(--primary-600);
+}
 
   .charts-grid {
     page-break-before: always;

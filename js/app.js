@@ -1,9 +1,9 @@
 /**
  * ==============================================================================
- * AQUAFLOW - MAIN APPLICATION CONTROLLER (STOCK MANAGEMENT)
+ * AQUAFLOW - MAIN APPLICATION CONTROLLER (STOCK MANAGEMENT & AUTHENTICATION)
  * ==============================================================================
- * Mengatur alur data, interaksi UI, filter, visualisasi grafik, ekspor,
- * serta sinkronisasi mutasi dan stok fisik galon.
+ * Mengatur alur data, autentikasi pengguna, interaksi UI, filter, visualisasi
+ * grafik, ekspor, serta sinkronisasi mutasi dan stok fisik galon.
  */
 
 // Kategori Mutasi Stok Bawaan
@@ -45,6 +45,7 @@ const AppState = {
     page: 1,
     pageSize: 10
   },
+  authMode: 'login', // 'login' | 'register'
   editingTxId: null,
   deleteTxId: null
 };
@@ -54,9 +55,183 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initTimeTicker();
   initEventListeners();
-  await loadData();
+  initAuthEventListeners();
+
+  // Inisialisasi status autentikasi
+  const user = await window.authManager.init();
+  handleAuthState(user);
   lucide.createIcons();
 });
+
+// Callback saat status login Supabase berubah
+window.onAuthStateChanged = (user) => {
+  handleAuthState(user);
+};
+
+function handleAuthState(user) {
+  const authOverlay = document.getElementById('authOverlay');
+  const userProfileWrap = document.getElementById('userProfileWrap');
+
+  if (user) {
+    // Pengguna sudah login
+    if (authOverlay) authOverlay.classList.remove('active');
+    if (userProfileWrap) {
+      userProfileWrap.style.display = 'flex';
+      updateUserProfileUI(user);
+    }
+    loadData();
+  } else {
+    // Pengguna belum login -> Tampilkan layar login & kunci akses
+    if (authOverlay) authOverlay.classList.add('active');
+    if (userProfileWrap) userProfileWrap.style.display = 'none';
+  }
+}
+
+function updateUserProfileUI(user) {
+  const avatar = document.getElementById('userAvatar');
+  const nameText = document.getElementById('userNameText');
+
+  if (user) {
+    const name = user.fullName || user.email.split('@')[0];
+    if (nameText) nameText.textContent = name;
+
+    if (avatar) {
+      // Buat inisial 1-2 huruf
+      const initials = name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase() || 'AD';
+      avatar.textContent = initials;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// AUTHENTICATION UI EVENT LISTENERS
+// ----------------------------------------------------------------------------
+function initAuthEventListeners() {
+  const tabLogin = document.getElementById('tabLogin');
+  const tabRegister = document.getElementById('tabRegister');
+  const authNameGroup = document.getElementById('authNameGroup');
+  const btnAuthSubmitText = document.getElementById('btnAuthSubmitText');
+  const authAlert = document.getElementById('authAlert');
+  const authForm = document.getElementById('authForm');
+  const btnTogglePassword = document.getElementById('btnTogglePassword');
+  const passwordInput = document.getElementById('authPasswordInput');
+  const btnGuestLogin = document.getElementById('btnGuestLogin');
+  const btnLogout = document.getElementById('btnLogout');
+
+  // Tab Login Click
+  tabLogin?.addEventListener('click', () => {
+    AppState.authMode = 'login';
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    if (authNameGroup) authNameGroup.style.display = 'none';
+    if (btnAuthSubmitText) btnAuthSubmitText.textContent = 'Masuk ke Dashboard';
+    hideAuthAlert();
+  });
+
+  // Tab Register Click
+  tabRegister?.addEventListener('click', () => {
+    AppState.authMode = 'register';
+    tabRegister.classList.add('active');
+    tabLogin.classList.remove('active');
+    if (authNameGroup) authNameGroup.style.display = 'block';
+    if (btnAuthSubmitText) btnAuthSubmitText.textContent = 'Daftar Akun Baru';
+    hideAuthAlert();
+  });
+
+  // Show/Hide Password Toggle
+  btnTogglePassword?.addEventListener('click', () => {
+    if (!passwordInput) return;
+    const isPass = passwordInput.type === 'password';
+    passwordInput.type = isPass ? 'text' : 'password';
+
+    const eyeIcon = document.getElementById('eyeIcon');
+    if (eyeIcon) {
+      eyeIcon.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
+      lucide.createIcons();
+    }
+  });
+
+  // Form Submit Login / Register
+  authForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAuthAlert();
+
+    const email = document.getElementById('authEmailInput').value.trim();
+    const password = document.getElementById('authPasswordInput').value;
+    const fullName = document.getElementById('authNameInput')?.value.trim() || 'Admin Depot';
+    const submitBtn = document.getElementById('btnAuthSubmit');
+
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      if (AppState.authMode === 'login') {
+        const res = await window.authManager.signIn(email, password);
+        if (res.success) {
+          showToast(`Selamat datang kembali, ${res.user.fullName}!`, 'success');
+          handleAuthState(res.user);
+        } else {
+          showAuthAlert(res.message, 'error');
+        }
+      } else {
+        // Mode Register
+        const res = await window.authManager.signUp(email, password, fullName);
+        if (res.success) {
+          if (res.user && !res.message.includes('konfirmasi')) {
+            showToast('Pendaftaran akun berhasil!', 'success');
+            handleAuthState(res.user);
+          } else {
+            showAuthAlert(res.message, 'success');
+          }
+        } else {
+          showAuthAlert(res.message, 'error');
+        }
+      }
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+
+  // Guest / Demo Login Button
+  btnGuestLogin?.addEventListener('click', () => {
+    const res = window.authManager.signInDemo();
+    showToast('Masuk dalam mode Tamu / Offline.', 'info');
+    handleAuthState(res.user);
+  });
+
+  // Logout Button
+  btnLogout?.addEventListener('click', async () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari akun?')) {
+      await window.authManager.signOut();
+      showToast('Anda telah keluar.', 'info');
+      handleAuthState(null);
+    }
+  });
+}
+
+function showAuthAlert(message, type = 'error') {
+  const alert = document.getElementById('authAlert');
+  if (!alert) return;
+
+  alert.className = `auth-alert ${type}`;
+  alert.innerHTML = `
+    <i data-lucide="${type === 'error' ? 'alert-triangle' : 'check-circle'}" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+    <span>${message}</span>
+  `;
+  lucide.createIcons();
+}
+
+function hideAuthAlert() {
+  const alert = document.getElementById('authAlert');
+  if (alert) {
+    alert.style.display = 'none';
+    alert.innerHTML = '';
+  }
+}
 
 // ----------------------------------------------------------------------------
 // TEMA & WAKTU (THEME & CLOCK)

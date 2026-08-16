@@ -50,20 +50,22 @@ CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON public.gallon_transact
 ALTER TABLE public.gallon_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallon_inventory ENABLE ROW LEVEL SECURITY;
 
--- 5. Buat Policy RLS Publik (Anon Key)
+-- 5. Buat Policy RLS untuk Pengguna Authenticated & Anon
 DROP POLICY IF EXISTS "Public access for transactions" ON public.gallon_transactions;
-CREATE POLICY "Public access for transactions" 
+DROP POLICY IF EXISTS "Access for transactions" ON public.gallon_transactions;
+CREATE POLICY "Access for transactions" 
 ON public.gallon_transactions 
 FOR ALL 
-TO anon, authenticated 
+TO authenticated, anon 
 USING (true) 
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for inventory" ON public.gallon_inventory;
-CREATE POLICY "Public access for inventory" 
+DROP POLICY IF EXISTS "Access for inventory" ON public.gallon_inventory;
+CREATE POLICY "Access for inventory" 
 ON public.gallon_inventory 
 FOR ALL 
-TO anon, authenticated 
+TO authenticated, anon 
 USING (true) 
 WITH CHECK (true);
 
