@@ -1,15 +1,15 @@
 -- ==============================================================================
--- AQUAFLOW - SKEMA DATABASE SUPABASE UNTUK CATATAN KEUANGAN DEPOT AIR GALON
+-- AQUAFLOW - SKEMA DATABASE SUPABASE UNTUK PENCATATAN & MUTASI STOK GALON
 -- ==============================================================================
 -- Jalankan skrip ini di Supabase SQL Editor (Dashboard Supabase -> SQL Editor -> New Query)
 
--- 1. Buat Tabel Transaksi Keuangan Galon
+-- 1. Buat Tabel Mutasi & Transaksi Stok Galon
 CREATE TABLE IF NOT EXISTS public.gallon_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     
-    -- Informasi Waktu Transaksi
+    -- Informasi Waktu Mutasi
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     time TIME NOT NULL DEFAULT CURRENT_TIME,
     day_name VARCHAR(20) NOT NULL, -- Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu
@@ -17,33 +17,29 @@ CREATE TABLE IF NOT EXISTS public.gallon_transactions (
     month INT NOT NULL,            -- 1 s/d 12
     year INT NOT NULL,             -- 2024, 2025, 2026, dst.
     
-    -- Tipe & Rincian Transaksi
-    type VARCHAR(20) NOT NULL CHECK (type IN ('pemasukan', 'pengeluaran')),
+    -- Tipe & Rincian Mutasi Stok
+    type VARCHAR(20) NOT NULL CHECK (type IN ('keluar', 'masuk')),
     category VARCHAR(100) NOT NULL,
     
-    -- Detail Galon & Finansial
-    gallon_qty INT DEFAULT 0,              -- Jumlah galon (khusus penjualan/pembelian galon)
-    unit_price NUMERIC(15, 2) DEFAULT 0,  -- Harga per unit/galon
-    amount NUMERIC(15, 2) NOT NULL,       -- Total nominal uang (Rp)
+    -- Detail Stok Galon
+    gallon_qty INT NOT NULL DEFAULT 1 CHECK (gallon_qty > 0), -- Jumlah fisik galon
     
-    -- Pembayaran & Keterangan
-    payment_method VARCHAR(50) DEFAULT 'Tunai', -- Tunai, QRIS, Transfer Bank, Hutang
-    customer_name VARCHAR(150),                 -- Nama pelanggan / vendor (opsional)
-    notes TEXT                                  -- Catatan tambahan / keterangan
+    -- Identitas & Keterangan
+    customer_name VARCHAR(150), -- Nama pelanggan / vendor / pengantar (opsional)
+    notes TEXT                  -- Catatan tambahan / keterangan
 );
 
--- 2. Buat Tabel Inventaris & Stok Galon
+-- 2. Buat Tabel Inventaris Stok Galon Fisik Depot
 CREATE TABLE IF NOT EXISTS public.gallon_inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    stock_filled INT DEFAULT 50,     -- Galon siap jual / isi
-    stock_empty INT DEFAULT 20,      -- Galon kosong siap isi
-    stock_borrowed INT DEFAULT 5,   -- Galon dipinjam pelanggan
-    refill_price NUMERIC(15, 2) DEFAULT 6000,     -- Harga standar isi ulang
-    new_gallon_price NUMERIC(15, 2) DEFAULT 45000 -- Harga standar galon baru + isi
+    stock_filled INT NOT NULL DEFAULT 85,    -- Galon siap jual / isi
+    stock_empty INT NOT NULL DEFAULT 30,     -- Galon kosong siap isi
+    stock_borrowed INT NOT NULL DEFAULT 12,  -- Galon dipinjam pelanggan
+    stock_broken INT NOT NULL DEFAULT 0      -- Galon rusak / pecah / afkir
 );
 
--- 3. Buat Index untuk Performa Filter Cepat berdasarkan Waktu & Jenis
+-- 3. Buat Index untuk Performa Filter Cepat
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.gallon_transactions(date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_year_month ON public.gallon_transactions(year, month);
 CREATE INDEX IF NOT EXISTS idx_transactions_day_name ON public.gallon_transactions(day_name);
@@ -54,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON public.gallon_transact
 ALTER TABLE public.gallon_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallon_inventory ENABLE ROW LEVEL SECURITY;
 
--- 5. Buat Policy RLS Publik (Anon Key) untuk Memudahkan CRUD dari Aplikasi Frontend
+-- 5. Buat Policy RLS Publik (Anon Key)
 DROP POLICY IF EXISTS "Public access for transactions" ON public.gallon_transactions;
 CREATE POLICY "Public access for transactions" 
 ON public.gallon_transactions 
@@ -86,7 +82,7 @@ BEFORE UPDATE ON public.gallon_transactions
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
--- 7. Insert Data Awal Default untuk Stok Galon jika belum ada
-INSERT INTO public.gallon_inventory (id, stock_filled, stock_empty, stock_borrowed, refill_price, new_gallon_price)
-SELECT gen_random_uuid(), 85, 30, 12, 6000, 45000
+-- 7. Insert Data Awal Default untuk Inventaris jika belum ada
+INSERT INTO public.gallon_inventory (id, stock_filled, stock_empty, stock_borrowed, stock_broken)
+SELECT gen_random_uuid(), 85, 30, 12, 0
 WHERE NOT EXISTS (SELECT 1 FROM public.gallon_inventory);

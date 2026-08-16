@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Aplikasi Pencatatan Pemasukan dan Pengeluaran Depot Air Galon Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database dan CRUD.">
-  <title>AquaFlow - Catatan Keuangan Depot Air Galon</title>
+  <meta name="description" content="Aplikasi Pencatatan & Manajemen Stok Galon Depot Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database dan CRUD.">
+  <title>AquaFlow - Catatan & Mutasi Stok Galon Depot</title>
   
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/style.css">
@@ -23,7 +23,7 @@
 
   <!-- Print Only Header -->
   <div class="print-report-header" style="display: none;">
-    <h2>LAPORAN KEUANGAN DEPOT AIR MINUM GALON</h2>
+    <h2>LAPORAN REKAPITULASI MUTASI & STOK GALON DEPOT</h2>
     <p id="printPeriodDesc">Periode Laporan: -</p>
   </div>
 
@@ -32,14 +32,14 @@
     <div class="container header-inner">
       <div class="brand-group">
         <div class="brand-icon">
-          <i data-lucide="droplets"></i>
+          <i data-lucide="boxes"></i>
         </div>
         <div>
           <div class="brand-title heading-font">
             Aqua<span>Flow</span>
-            <span class="brand-badge">PRO DEPOT</span>
+            <span class="brand-badge">STOK DEPOT</span>
           </div>
-          <div class="brand-subtitle">Catatan Keuangan & Kasir Depot Galon</div>
+          <div class="brand-subtitle">Catatan & Mutasi Stok Galon Depot</div>
         </div>
       </div>
 
@@ -58,58 +58,61 @@
         </div>
 
         <!-- Theme Switcher -->
-        <button id="themeToggleBtn" class="btn btn-outline btn-icon" title="Ganti Mode Gelap/Terang">
-          <i data-lucide="moon"></i>
+        <button id="themeToggleBtn" class="theme-toggle-btn" title="Ganti Mode Gelap / Terang">
+          <i data-lucide="moon" id="themeIcon"></i>
         </button>
 
-        <!-- Help / Guide Modal Button -->
-        <button class="btn btn-outline btn-icon" title="Panduan Supabase & Bantuan" onclick="openModal('helpModal')">
-          <i data-lucide="help-circle"></i>
+        <!-- Supabase Settings Button -->
+        <button id="btnOpenDbConfig" class="btn btn-outline btn-sm" title="Pengaturan Database Supabase">
+          <i data-lucide="settings" style="width: 14px; height: 14px;"></i>
+          <span>Pengaturan DB</span>
+        </button>
+
+        <!-- Help Guide Button -->
+        <button id="btnOpenHelp" class="btn btn-outline btn-sm" title="Panduan Setup Database & Deploy">
+          <i data-lucide="help-circle" style="width: 14px; height: 14px;"></i>
+          <span>Panduan</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content Layout -->
-  <main class="container" style="flex: 1;">
+  <!-- Main Container -->
+  <main class="container app-main">
 
-    <!-- Quick Cashier Shortcuts Bar -->
-    <section class="quick-cashier-section">
-      <div class="quick-bar">
-        <div class="quick-bar-info">
+    <!-- Quick Action / Bar Transaksi Cepat -->
+    <section class="quick-action-bar">
+      <div class="quick-bar-content">
+        <div class="quick-bar-title">
           <div class="quick-bar-icon">
             <i data-lucide="zap"></i>
           </div>
           <div class="quick-bar-text">
-            <h4>Kasir Cepat Depot</h4>
-            <p>Klik 1-kali untuk mencatat transaksi penjualan galon secara instan</p>
+            <h4>Pencatatan Cepat Stok Galon</h4>
+            <p>Klik 1-kali untuk mencatat mutasi galon keluar/terjual secara instan</p>
           </div>
         </div>
 
         <div class="quick-btn-group">
-          <button class="btn-quick" data-quick-action="refill-1">
+          <button class="btn-quick" data-quick-action="refill-1" title="Catat 1 Galon Isi Ulang Terjual">
             <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
             <span>1 Isi Ulang</span>
-            <span class="price-tag">(Rp 6.000)</span>
           </button>
-          <button class="btn-quick" data-quick-action="refill-5">
+          <button class="btn-quick" data-quick-action="refill-5" title="Catat 5 Galon Isi Ulang Terjual">
             <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
             <span>5 Isi Ulang</span>
-            <span class="price-tag">(Rp 30.000)</span>
           </button>
-          <button class="btn-quick" data-quick-action="refill-10">
+          <button class="btn-quick" data-quick-action="refill-10" title="Catat 10 Galon Isi Ulang Terjual">
             <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
             <span>10 Isi Ulang</span>
-            <span class="price-tag">(Rp 60.000)</span>
           </button>
-          <button class="btn-quick" data-quick-action="new-1">
+          <button class="btn-quick" data-quick-action="new-1" title="Catat 1 Galon Baru Terjual">
             <i data-lucide="package-plus" style="width: 14px; height: 14px;"></i>
             <span>1 Galon Baru</span>
-            <span class="price-tag">(Rp 45.000)</span>
           </button>
           <button id="btnOpenAddTxModal" class="btn btn-primary btn-sm">
             <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
-            <span>+ Transaksi Kustom</span>
+            <span>+ Catat Mutasi Galon</span>
           </button>
         </div>
       </div>
@@ -117,63 +120,63 @@
 
     <!-- KPI Summary Cards Grid -->
     <section class="stats-grid">
-      <!-- Total Income -->
+      <!-- Total Ready / Filled Stock -->
       <div class="kpi-card income">
         <div class="kpi-header">
-          <span class="kpi-title">Total Pemasukan</span>
+          <span class="kpi-title">Galon Siap Jual (Isi)</span>
           <div class="kpi-icon-wrap">
-            <i data-lucide="arrow-down-left"></i>
+            <i data-lucide="droplets"></i>
           </div>
         </div>
-        <div id="kpiTotalIncome" class="kpi-value heading-font">Rp 0</div>
+        <div id="kpiStockFilled" class="kpi-value heading-font">0 Galon</div>
         <div class="kpi-footer">
-          <span>Pemasukan penjualan galon & lain-lain</span>
-          <span class="kpi-tag" style="color: var(--success-600);">Masuk</span>
+          <span>Stok fisik terisi di depot</span>
+          <span class="kpi-tag" style="color: var(--primary-600);">Siap Jual</span>
         </div>
       </div>
 
-      <!-- Total Expense -->
+      <!-- Total Gallons Out (Sold / Borrowed) -->
       <div class="kpi-card expense">
         <div class="kpi-header">
-          <span class="kpi-title">Total Pengeluaran</span>
+          <span class="kpi-title">Total Galon Keluar</span>
           <div class="kpi-icon-wrap">
             <i data-lucide="arrow-up-right"></i>
           </div>
         </div>
-        <div id="kpiTotalExpense" class="kpi-value heading-font">Rp 0</div>
+        <div id="kpiTotalGallonsOut" class="kpi-value heading-font">0 Galon</div>
         <div class="kpi-footer">
-          <span>Air baku, listrik, tutup, operasional</span>
-          <span class="kpi-tag" style="color: var(--danger-600);">Keluar</span>
+          <span id="kpiTxCount">0 catatan mutasi</span>
+          <span class="kpi-tag" style="color: var(--danger-600);">Keluar (-)</span>
         </div>
       </div>
 
-      <!-- Net Profit -->
-      <div class="kpi-card profit">
-        <div class="kpi-header">
-          <span class="kpi-title">Laba Bersih (Keuntungan)</span>
-          <div class="kpi-icon-wrap">
-            <i data-lucide="wallet"></i>
-          </div>
-        </div>
-        <div id="kpiNetProfit" class="kpi-value heading-font">Rp 0</div>
-        <div class="kpi-footer">
-          <span>Pemasukan dikurangi pengeluaran</span>
-          <span class="kpi-tag" style="color: var(--primary-600);">Profit</span>
-        </div>
-      </div>
-
-      <!-- Total Gallons Sold -->
+      <!-- Total Gallons In (Supply / Return) -->
       <div class="kpi-card volume">
         <div class="kpi-header">
-          <span class="kpi-title">Volume Galon Terjual</span>
+          <span class="kpi-title">Total Galon Masuk</span>
           <div class="kpi-icon-wrap">
-            <i data-lucide="cylinder"></i>
+            <i data-lucide="arrow-down-left"></i>
           </div>
         </div>
-        <div id="kpiTotalGallons" class="kpi-value heading-font">0 Galon</div>
+        <div id="kpiTotalGallonsIn" class="kpi-value heading-font">0 Galon</div>
         <div class="kpi-footer">
-          <span id="kpiTxCount">0 transaksi</span>
-          <span id="kpiAvgSales" class="kpi-tag">Rp 0 /hari</span>
+          <span>Pasokan baru & pengembalian</span>
+          <span class="kpi-tag" style="color: var(--success-600);">Masuk (+)</span>
+        </div>
+      </div>
+
+      <!-- Gallon Borrowed / Empty Summary -->
+      <div class="kpi-card profit">
+        <div class="kpi-header">
+          <span class="kpi-title">Galon Dipinjam Pelanggan</span>
+          <div class="kpi-icon-wrap">
+            <i data-lucide="users"></i>
+          </div>
+        </div>
+        <div id="kpiStockBorrowed" class="kpi-value heading-font">0 Galon</div>
+        <div class="kpi-footer">
+          <span>Sedang berada di pelanggan</span>
+          <span id="kpiStockEmptySummary" class="kpi-tag" style="color: var(--purple-500);">0 Kosong</span>
         </div>
       </div>
     </section>
@@ -268,27 +271,16 @@
 
         <!-- 4. Category Filter -->
         <div class="form-group">
-          <label class="form-label">Kategori</label>
+          <label class="form-label">Kategori Mutasi</label>
           <select id="filterCategorySelect" class="form-select">
             <option value="all">Semua Kategori</option>
           </select>
         </div>
 
-        <!-- 5. Payment Method Filter -->
-        <div class="form-group">
-          <label class="form-label">Metode Bayar</label>
-          <select id="filterPaymentSelect" class="form-select">
-            <option value="all">Semua Metode</option>
-            <option value="Tunai">Tunai</option>
-            <option value="QRIS">QRIS</option>
-            <option value="Transfer Bank">Transfer Bank</option>
-          </select>
-        </div>
-
-        <!-- 6. Search Input -->
-        <div class="form-group">
-          <label class="form-label">Cari Catatan / Pelanggan</label>
-          <input type="text" id="filterSearchInput" class="form-control" placeholder="Ketik nama / catatan...">
+        <!-- 5. Search Input -->
+        <div class="form-group" style="grid-column: span 2;">
+          <label class="form-label">Cari Nama Pelanggan / Vendor / Catatan</label>
+          <input type="text" id="filterSearchInput" class="form-control" placeholder="Ketik nama pelanggan, pengantar, atau catatan...">
         </div>
 
         <!-- Reset Button -->
@@ -318,10 +310,10 @@
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <i data-lucide="boxes" style="color: var(--primary-500); width: 18px; height: 18px;"></i>
-          <h4 style="font-size: 0.95rem; font-weight: 700;">Status Stok Galon Depot</h4>
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Status Stok Fisik Galon Depot</h4>
         </div>
         <button id="btnEditInventory" class="btn btn-outline btn-sm">
-          <i data-lucide="edit-2" style="width: 13px; height: 13px;"></i> Kelola Stok & Harga
+          <i data-lucide="edit-2" style="width: 13px; height: 13px;"></i> Kelola Stok Fisik
         </button>
       </div>
 
@@ -343,8 +335,15 @@
         <div class="inventory-item borrowed">
           <div class="inventory-icon"><i data-lucide="users"></i></div>
           <div class="inventory-info">
-            <h5>Galon Dipinjam / Pelanggan</h5>
+            <h5>Galon Dipinjam (Pelanggan)</h5>
             <div id="stockBorrowedDisplay" class="count heading-font">0 Galon</div>
+          </div>
+        </div>
+        <div class="inventory-item broken">
+          <div class="inventory-icon"><i data-lucide="alert-triangle"></i></div>
+          <div class="inventory-info">
+            <h5>Galon Rusak / Afkir</h5>
+            <div id="stockBrokenDisplay" class="count heading-font">0 Galon</div>
           </div>
         </div>
       </div>
@@ -357,7 +356,7 @@
         <div class="chart-header">
           <div class="chart-title">
             <i data-lucide="trending-up" style="color: var(--primary-500);"></i>
-            <span>Tren Keuangan (Pemasukan vs Pengeluaran)</span>
+            <span>Tren Mutasi Galon (Keluar vs Masuk)</span>
           </div>
         </div>
         <div class="chart-canvas-wrap">
@@ -370,7 +369,7 @@
         <div class="chart-header">
           <div id="categoryChartTitle" class="chart-title">
             <i data-lucide="pie-chart" style="color: var(--primary-500);"></i>
-            <span>Komposisi Kategori</span>
+            <span>Distribusi Volume Galon per Kategori</span>
           </div>
         </div>
         <div class="chart-canvas-wrap">
@@ -383,16 +382,16 @@
     <section class="table-section">
       <div class="table-action-bar">
         <div class="table-title-group">
-          <i data-lucide="receipt" style="color: var(--primary-500);"></i>
-          <h3 class="table-title">Riwayat Catatan Transaksi</h3>
+          <i data-lucide="clipboard-list" style="color: var(--primary-500);"></i>
+          <h3 class="table-title">Riwayat Catatan Mutasi Galon</h3>
           <span id="tableCountBadge" class="table-count-badge">0 Data</span>
         </div>
 
-        <!-- Type Filter Tabs (Semua / Pemasukan / Pengeluaran) -->
+        <!-- Type Filter Tabs (Semua / Keluar / Masuk) -->
         <div class="filter-tabs">
           <button class="filter-tab-btn type-filter-btn active" data-type="all">Semua</button>
-          <button class="filter-tab-btn type-filter-btn" data-type="pemasukan">Pemasukan (+)</button>
-          <button class="filter-tab-btn type-filter-btn" data-type="pengeluaran">Pengeluaran (-)</button>
+          <button class="filter-tab-btn type-filter-btn" data-type="keluar">Galon Keluar (-)</button>
+          <button class="filter-tab-btn type-filter-btn" data-type="masuk">Galon Masuk (+)</button>
         </div>
 
         <!-- Action Buttons (Add, Export, Print) -->
@@ -407,7 +406,7 @@
             <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Cetak Laporan
           </button>
           <button class="btn btn-primary btn-sm" onclick="openTransactionModal()">
-            <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> Tambah Transaksi
+            <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> Catat Mutasi
           </button>
         </div>
       </div>
@@ -418,12 +417,11 @@
           <thead>
             <tr>
               <th>Tanggal & Waktu</th>
-              <th>Kategori</th>
+              <th>Tipe Mutasi</th>
+              <th>Kategori Mutasi</th>
               <th style="text-align: center;">Jumlah Galon</th>
-              <th>Harga Satuan</th>
-              <th>Total Nominal</th>
-              <th>Metode Bayar</th>
-              <th>Pelanggan / Keterangan</th>
+              <th>Pelanggan / Vendor</th>
+              <th>Keterangan / Catatan</th>
               <th style="text-align: center;">Aksi</th>
             </tr>
           </thead>
@@ -435,10 +433,10 @@
         <!-- Empty State -->
         <div id="tableEmptyState" class="empty-state" style="display: none;">
           <div class="empty-icon"><i data-lucide="inbox"></i></div>
-          <h4 class="empty-title">Belum Ada Transaksi Tercatat</h4>
-          <p class="empty-desc">Tidak ada data transaksi yang cocok dengan filter yang dipilih. Tambahkan transaksi baru atau ganti filter periode waktu.</p>
+          <h4 class="empty-title">Belum Ada Catatan Mutasi Galon</h4>
+          <p class="empty-desc">Tidak ada data mutasi yang cocok dengan filter yang dipilih. Catat mutasi baru atau sesuaikan filter periode waktu.</p>
           <button id="btnOpenAddTxEmpty" class="btn btn-primary">
-            <i data-lucide="plus-circle"></i> Catat Transaksi Baru
+            <i data-lucide="plus-circle"></i> Catat Mutasi Galon
           </button>
         </div>
       </div>
@@ -462,7 +460,7 @@
   <!-- App Footer -->
   <footer class="app-footer">
     <div class="container">
-      <p><strong>AquaFlow</strong> &copy; 2026 - Sistem Manajemen Keuangan & Kasir Depot Air Galon. Terhubung dengan Database Supabase & Siap Deploy ke Vercel.</p>
+      <p><strong>AquaFlow</strong> &copy; 2026 - Sistem Pencatatan & Manajemen Stok Galon Depot Air Minum. Terhubung dengan Database Supabase & Siap Deploy ke Vercel.</p>
     </div>
   </footer>
 
@@ -470,12 +468,12 @@
        MODALS
        ======================================================================== -->
 
-  <!-- 1. MODAL TAMBAH / EDIT TRANSAKSI -->
+  <!-- 1. MODAL TAMBAH / EDIT MUTASI STOK -->
   <div id="transactionModal" class="modal-backdrop">
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 id="txModalTitle" class="modal-title">
-          <i data-lucide="plus-circle"></i> Tambah Transaksi
+          <i data-lucide="plus-circle"></i> Catat Mutasi Galon
         </h3>
         <button class="modal-close" onclick="closeModal('transactionModal')">
           <i data-lucide="x"></i>
@@ -484,16 +482,16 @@
 
       <form id="transactionForm">
         <div class="modal-body">
-          <!-- Type Switcher (Pemasukan vs Pengeluaran) -->
+          <!-- Type Switcher (Galon Keluar vs Galon Masuk) -->
           <div class="type-switch-group">
-            <input type="radio" id="typeIncome" name="txType" value="pemasukan" class="type-switch-input" checked>
-            <label for="typeIncome" class="type-switch-label income-label">
-              <i data-lucide="arrow-down-left"></i> Pemasukan
+            <input type="radio" id="typeOut" name="txType" value="keluar" class="type-switch-input" checked>
+            <label for="typeOut" class="type-switch-label out-label">
+              <i data-lucide="arrow-up-right"></i> Galon Keluar (-)
             </label>
 
-            <input type="radio" id="typeExpense" name="txType" value="pengeluaran" class="type-switch-input">
-            <label for="typeExpense" class="type-switch-label expense-label">
-              <i data-lucide="arrow-up-right"></i> Pengeluaran
+            <input type="radio" id="typeIn" name="txType" value="masuk" class="type-switch-input">
+            <label for="typeIn" class="type-switch-label in-label">
+              <i data-lucide="arrow-down-left"></i> Galon Masuk (+)
             </label>
           </div>
 
@@ -511,63 +509,34 @@
 
           <!-- Category Selection -->
           <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Kategori Transaksi *</label>
+            <label class="form-label">Kategori Mutasi *</label>
             <select id="txCategory" class="form-select" required>
-              <!-- Populated dynamically -->
+              <!-- Populated dynamically based on type -->
             </select>
           </div>
 
-          <!-- Qty & Unit Price Row (For Income/Gallons) -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div id="txQtyGroup" class="form-group">
-              <label class="form-label">Jumlah Galon (Qty)</label>
-              <input type="number" id="txQty" class="form-control" min="0" value="1" placeholder="0">
-            </div>
-            <div id="txUnitPriceGroup" class="form-group">
-              <label class="form-label">Harga Satuan (Rp)</label>
-              <input type="number" id="txUnitPrice" class="form-control" min="0" step="500" value="6000" placeholder="6000">
-            </div>
-          </div>
-
-          <!-- Amount Highlight Box -->
-          <div class="calc-highlight">
-            <span class="calc-title">Total Nominal:</span>
-            <span id="txCalcDisplay" class="calc-result">Rp 6.000</span>
-          </div>
-
-          <!-- Direct Amount Input (Hidden or Manual Override) -->
+          <!-- Gallon Qty Input -->
           <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Nominal Uang (Rp) *</label>
-            <input type="number" id="txAmount" class="form-control" min="1" step="500" required placeholder="Contoh: 6000">
-          </div>
-
-          <!-- Payment Method -->
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Metode Pembayaran</label>
-            <select id="txPaymentMethod" class="form-select">
-              <option value="Tunai">Tunai / Cash</option>
-              <option value="QRIS">QRIS</option>
-              <option value="Transfer Bank">Transfer Bank</option>
-              <option value="Hutang / Titip">Hutang / Titip</option>
-            </select>
+            <label class="form-label">Jumlah Galon (Qty) *</label>
+            <input type="number" id="txQty" class="form-control" min="1" value="1" required placeholder="Masukkan jumlah galon (contoh: 5)">
           </div>
 
           <!-- Customer Name & Notes -->
           <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Nama Pelanggan / Vendor (Opsional)</label>
-            <input type="text" id="txCustomer" class="form-control" placeholder="Contoh: Bu Siti / Toko Barokah">
+            <label class="form-label">Nama Pelanggan / Vendor / Pengantar (Opsional)</label>
+            <input type="text" id="txCustomer" class="form-control" placeholder="Contoh: Bu Siti / Toko Barokah / Kurir Budi">
           </div>
 
           <div class="form-group">
-            <label class="form-label">Catatan / Keterangan</label>
-            <input type="text" id="txNotes" class="form-control" placeholder="Contoh: Pengantaran blok C no 4">
+            <label class="form-label">Catatan / Keterangan Tambahan</label>
+            <input type="text" id="txNotes" class="form-control" placeholder="Contoh: Pengiriman blok C no 4 (tukar galon)">
           </div>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick="closeModal('transactionModal')">Batal</button>
           <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Simpan Transaksi
+            <i data-lucide="check"></i> Simpan Catatan Mutasi
           </button>
         </div>
       </form>
@@ -579,7 +548,7 @@
     <div class="modal-dialog" style="max-width: 420px;">
       <div class="modal-header">
         <h3 class="modal-title" style="color: var(--danger-600);">
-          <i data-lucide="alert-triangle"></i> Hapus Transaksi?
+          <i data-lucide="alert-triangle"></i> Hapus Catatan Mutasi?
         </h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <i data-lucide="x"></i>
@@ -587,7 +556,7 @@
       </div>
       <div class="modal-body">
         <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
-          Apakah Anda yakin ingin menghapus data transaksi ini? Data yang telah dihapus tidak dapat dipulihkan.
+          Apakah Anda yakin ingin menghapus catatan mutasi stok ini? Data yang telah dihapus tidak dapat dipulihkan.
         </p>
         <div id="deleteTxDetails" style="background-color: var(--bg-muted); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.82rem;">
           <!-- Populated dynamically -->
@@ -602,12 +571,12 @@
     </div>
   </div>
 
-  <!-- 3. MODAL KELOLA INVENTARIS & HARGA STOK GALON -->
+  <!-- 3. MODAL KELOLA INVENTARIS STOK FISIK GALON -->
   <div id="inventoryModal" class="modal-backdrop">
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 class="modal-title">
-          <i data-lucide="boxes"></i> Kelola Stok & Pengaturan Harga
+          <i data-lucide="boxes"></i> Kelola Jumlah Stok Fisik Galon
         </h3>
         <button class="modal-close" onclick="closeModal('inventoryModal')">
           <i data-lucide="x"></i>
@@ -616,35 +585,29 @@
 
       <form id="inventoryForm">
         <div class="modal-body">
-          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase; margin-bottom: 0.75rem;">
-            1. Jumlah Stok Fisik Galon di Depot
-          </h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Sesuaikan jumlah fisik galon yang ada di depot secara manual jika terdapat perbedaan stok fisik (stok opname).
+          </p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
             <div class="form-group">
-              <label class="form-label">Galon Isi (Siap Jual)</label>
+              <label class="form-label">Galon Siap Jual (Isi)</label>
               <input type="number" id="invStockFilled" class="form-control" min="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Galon Kosong</label>
+              <label class="form-label">Galon Kosong (Siap Isi)</label>
               <input type="number" id="invStockEmpty" class="form-control" min="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Galon Dipinjam</label>
-              <input type="number" id="invStockBorrowed" class="form-control" min="0" required>
             </div>
           </div>
 
-          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase; margin-bottom: 0.75rem;">
-            2. Harga Standar Depot
-          </h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
             <div class="form-group">
-              <label class="form-label">Harga Isi Ulang (Rp)</label>
-              <input type="number" id="invRefillPrice" class="form-control" min="0" step="500" required>
+              <label class="form-label">Galon Dipinjam (Pelanggan)</label>
+              <input type="number" id="invStockBorrowed" class="form-control" min="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Harga Galon Baru + Isi (Rp)</label>
-              <input type="number" id="invNewPrice" class="form-control" min="0" step="500" required>
+              <label class="form-label">Galon Rusak / Pecah / Afkir</label>
+              <input type="number" id="invStockBroken" class="form-control" min="0" required>
             </div>
           </div>
         </div>
@@ -652,7 +615,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick="closeModal('inventoryModal')">Batal</button>
           <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Simpan Pengaturan
+            <i data-lucide="check"></i> Simpan Stok Fisik
           </button>
         </div>
       </form>
@@ -674,7 +637,7 @@
       <form id="dbConfigForm">
         <div class="modal-body">
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Hubungkan aplikasi dengan database cloud <strong>Supabase</strong> agar catatan keuangan tersimpan secara permanen dan dapat diakses dari mana saja.
+            Hubungkan aplikasi dengan database cloud <strong>Supabase</strong> agar catatan mutasi & stok galon tersimpan secara permanen dan dapat diakses bersama secara real-time.
           </p>
 
           <div class="form-group" style="margin-bottom: 0.85rem;">
@@ -687,7 +650,7 @@
             <input type="password" id="supabaseKeyInput" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
           </div>
 
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
             <button type="button" id="btnTestDbConnection" class="btn btn-outline btn-sm">
               <i data-lucide="activity"></i> Tes Koneksi
             </button>
@@ -746,10 +709,10 @@
         </h4>
         <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
           <li>Buka <a href="https://supabase.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">supabase.com</a> dan buat akun / proyek baru gratis.</li>
-          <li>Masuk ke menu <strong>SQL Editor</strong> di sidebar dashboard Supabase.</li>
-          <li>Klik <strong>New Query</strong>, lalu salin dan jalankan seluruh isi file <code>supabase_schema.sql</code> yang sudah disediakan di folder proyek ini.</li>
+          <li>Masuk ke menu <strong>SQL Editor</strong> di dashboard Supabase.</li>
+          <li>Klik <strong>New Query</strong>, lalu salin dan jalankan seluruh isi file <code>supabase_schema.sql</code> yang ada di folder proyek ini.</li>
           <li>Buka <strong>Project Settings -> API</strong>, lalu salin <code>Project URL</code> dan <code>anon public API key</code>.</li>
-          <li>Masukkan kedua nilai tersebut ke dalam modal <strong>Pengaturan Database</strong> di aplikasi ini.</li>
+          <li>Masukkan kedua nilai tersebut ke dalam modal <strong>Pengaturan Database</strong> di aplikasi ini atau di file <code>env.js</code>.</li>
         </ol>
 
         <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
@@ -762,10 +725,10 @@
         </ol>
 
         <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
-          3. Fitur Filter Waktu Lengkap
+          3. Fitur Filter Waktu & Rekapitulasi Stok
         </h4>
         <p style="color: var(--text-muted);">
-          Gunakan filter di dashboard untuk melihat rekapitulasi data berdasarkan <strong>Hari</strong> (misal performa penjualan tiap hari Sabtu/Minggu), <strong>Bulan</strong>, <strong>Tahun</strong>, atau <strong>Rentang Tanggal Kustom</strong>.
+          Gunakan filter di panel atas untuk melihat tren pergerakan stok galon berdasarkan <strong>Hari</strong> (misal performa penjualan tiap hari Sabtu/Minggu), <strong>Bulan</strong>, <strong>Tahun</strong>, atau <strong>Rentang Tanggal Kustom</strong>.
         </p>
       </div>
 

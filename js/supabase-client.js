@@ -1,9 +1,9 @@
 /**
  * ==============================================================================
- * AQUAFLOW - SUPABASE CLIENT & HYBRID STORAGE MODULE
+ * AQUAFLOW - SUPABASE CLIENT & HYBRID STORAGE MODULE (STOCK MANAGEMENT)
  * ==============================================================================
- * Modul ini menangani operasi CRUD ke Supabase Database dengan fitur Auto-Fallback
- * ke LocalStorage apabila belum dikonfigurasi / sedang offline.
+ * Modul ini menangani operasi CRUD Mutasi Stok Galon ke Supabase Database
+ * dengan fitur Auto-Fallback ke LocalStorage apabila offline.
  */
 
 const STORAGE_KEYS = {
@@ -14,13 +14,12 @@ const STORAGE_KEYS = {
   THEME: 'aquaflow_theme'
 };
 
-// Data Awal Bawaan (Default Sample Data) jika storage kosong
+// Data Awal Bawaan (Default Sample Data) Stok Fisik Galon
 const DEFAULT_INVENTORY = {
   stock_filled: 85,
   stock_empty: 30,
   stock_borrowed: 12,
-  refill_price: 6000,
-  new_gallon_price: 45000
+  stock_broken: 2
 };
 
 const DEFAULT_TRANSACTIONS = [
@@ -32,14 +31,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(new Date()),
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Isi Ulang Galon',
     gallon_qty: 15,
-    unit_price: 6000,
-    amount: 90000,
-    payment_method: 'Tunai',
     customer_name: 'Warung Bu Siti',
-    notes: 'Pengiriman pagi 15 galon isi ulang'
+    notes: 'Pengiriman pagi 15 galon isi ulang (tukar galon)'
   },
   {
     id: 'demo-tx-2',
@@ -49,14 +45,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(new Date()),
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Galon Baru + Isi',
     gallon_qty: 2,
-    unit_price: 45000,
-    amount: 90000,
-    payment_method: 'QRIS',
     customer_name: 'Pak Hendra (Blok B-12)',
-    notes: 'Pelanggan baru ambil 2 galon'
+    notes: 'Pelanggan baru ambil 2 galon isi + bodi'
   },
   {
     id: 'demo-tx-3',
@@ -66,14 +59,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(new Date()),
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Isi Ulang Galon',
     gallon_qty: 8,
-    unit_price: 6000,
-    amount: 48000,
-    payment_method: 'Tunai',
     customer_name: 'Bpk. RT 04',
-    notes: 'Isi ulang rutin'
+    notes: 'Isi ulang rutin warga RT 04'
   },
   {
     id: 'demo-tx-4',
@@ -83,14 +73,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(new Date()),
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    type: 'pengeluaran',
-    category: 'Bensin Kurir/Operasional',
-    gallon_qty: 0,
-    unit_price: 0,
-    amount: 30000,
-    payment_method: 'Tunai',
-    customer_name: 'SPBU 34-1234',
-    notes: 'Bensin motor delivery 2 hari'
+    type: 'masuk',
+    category: 'Pengadaan Galon Baru',
+    gallon_qty: 20,
+    customer_name: 'Pabrik Galon Mitra',
+    notes: 'Masuk kiriman 20 unit galon baru'
   },
   {
     id: 'demo-tx-5',
@@ -100,12 +87,9 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(new Date()),
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Isi Ulang Galon',
     gallon_qty: 20,
-    unit_price: 6000,
-    amount: 120000,
-    payment_method: 'Transfer Bank',
     customer_name: 'Laundry Barokah',
     notes: 'Langganan laundry antar 20 galon'
   },
@@ -117,12 +101,9 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(getRelativeDate(-1)),
     month: getRelativeDate(-1).getMonth() + 1,
     year: getRelativeDate(-1).getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Isi Ulang Galon',
     gallon_qty: 35,
-    unit_price: 6000,
-    amount: 210000,
-    payment_method: 'Tunai',
     customer_name: 'Loket Depot',
     notes: 'Penjualan loket Sabtu pagi'
   },
@@ -134,14 +115,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(getRelativeDate(-1)),
     month: getRelativeDate(-1).getMonth() + 1,
     year: getRelativeDate(-1).getFullYear(),
-    type: 'pengeluaran',
-    category: 'Tutup & Tisu/Segel Galon',
-    gallon_qty: 1,
-    unit_price: 75000,
-    amount: 75000,
-    payment_method: 'Tunai',
-    customer_name: 'Toko Plastik Makmur',
-    notes: 'Beli 1 dus tutup galon + 1 pak tisu'
+    type: 'masuk',
+    category: 'Pengembalian Galon Pinjam',
+    gallon_qty: 5,
+    customer_name: 'Keluarga Bpk. Herman',
+    notes: 'Kembalikan 5 galon sisa acara syukuran'
   },
   {
     id: 'demo-tx-8',
@@ -151,14 +129,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(getRelativeDate(-2)),
     month: getRelativeDate(-2).getMonth() + 1,
     year: getRelativeDate(-2).getFullYear(),
-    type: 'pengeluaran',
-    category: 'Pembelian Air Tangki Baku',
-    gallon_qty: 1,
-    unit_price: 280000,
-    amount: 280000,
-    payment_method: 'Transfer Bank',
-    customer_name: 'Sumber Air Salak Prima',
-    notes: 'Isi tandon air baku 5.000 Liter'
+    type: 'keluar',
+    category: 'Galon Rusak / Pecah',
+    gallon_qty: 2,
+    customer_name: 'Internal Depot',
+    notes: 'Galon pecah saat bongkar muat'
   },
   {
     id: 'demo-tx-9',
@@ -168,14 +143,11 @@ const DEFAULT_TRANSACTIONS = [
     day_of_week: getDayOfWeekNumber(getRelativeDate(-3)),
     month: getRelativeDate(-3).getMonth() + 1,
     year: getRelativeDate(-3).getFullYear(),
-    type: 'pemasukan',
+    type: 'keluar',
     category: 'Isi Ulang Galon',
     gallon_qty: 40,
-    unit_price: 6000,
-    amount: 240000,
-    payment_method: 'Tunai',
     customer_name: 'Depot & Antar',
-    notes: 'Penjualan harian'
+    notes: 'Distribusi sore wilayah timur'
   }
 ];
 
@@ -226,8 +198,8 @@ class DatabaseManager {
 
   getCredentials() {
     return {
-      url: localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || '',
-      key: localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || ''
+      url: localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || (window.ENV && window.ENV.NEXT_PUBLIC_SUPABASE_URL) || '',
+      key: localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || (window.ENV && window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY) || ''
     };
   }
 
@@ -249,10 +221,10 @@ class DatabaseManager {
   }
 
   // --------------------------------------------------------------------------
-  // OPERASI CRUD TRANSAKSI
+  // OPERASI CRUD MUTASI STOK GALON
   // --------------------------------------------------------------------------
 
-  // READ: Ambil Semua Transaksi
+  // READ: Ambil Semua Mutasi Stok
   async getAllTransactions() {
     if (this.isSupabaseConnected()) {
       try {
@@ -264,7 +236,6 @@ class DatabaseManager {
 
         if (error) throw error;
         
-        // Simpan cache lokal
         if (data) {
           localStorage.setItem(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(data));
           return data;
@@ -277,7 +248,6 @@ class DatabaseManager {
     // Fallback Local Storage
     const local = localStorage.getItem(STORAGE_KEYS.LOCAL_TRANSACTIONS);
     if (!local) {
-      // Masukkan sample default jika baru pertama kali buka
       localStorage.setItem(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(DEFAULT_TRANSACTIONS));
       return DEFAULT_TRANSACTIONS;
     }
@@ -288,10 +258,11 @@ class DatabaseManager {
     }
   }
 
-  // CREATE: Tambah Transaksi Baru
+  // CREATE: Tambah Mutasi Stok Baru
   async createTransaction(txData) {
     const enrichedData = {
       ...txData,
+      gallon_qty: parseInt(txData.gallon_qty) || 1,
       day_name: txData.day_name || getIndonesianDayName(new Date(txData.date)),
       day_of_week: txData.day_of_week || getDayOfWeekNumber(new Date(txData.date)),
       month: txData.month || (new Date(txData.date).getMonth() + 1),
@@ -307,8 +278,8 @@ class DatabaseManager {
 
         if (error) throw error;
         if (data && data[0]) {
-          // Update cache lokal juga
           await this.syncLocalCacheAdd(data[0]);
+          await this.autoUpdateStock(data[0]);
           return { success: true, data: data[0], source: 'supabase' };
         }
       } catch (err) {
@@ -326,16 +297,17 @@ class DatabaseManager {
     localList.unshift(newTx);
     localStorage.setItem(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(localList));
 
-    // Update stok galon lokal secara otomatis
-    this.autoUpdateLocalStock(newTx);
+    // Update stok galon fisik
+    await this.autoUpdateStock(newTx);
 
     return { success: true, data: newTx, source: 'local' };
   }
 
-  // UPDATE: Edit Transaksi
+  // UPDATE: Edit Mutasi Stok
   async updateTransaction(id, updatedFields) {
     const enrichedData = {
       ...updatedFields,
+      gallon_qty: updatedFields.gallon_qty !== undefined ? (parseInt(updatedFields.gallon_qty) || 1) : undefined,
       day_name: updatedFields.day_name || (updatedFields.date ? getIndonesianDayName(new Date(updatedFields.date)) : undefined),
       day_of_week: updatedFields.day_of_week || (updatedFields.date ? getDayOfWeekNumber(new Date(updatedFields.date)) : undefined),
       month: updatedFields.month || (updatedFields.date ? new Date(updatedFields.date).getMonth() + 1 : undefined),
@@ -348,7 +320,6 @@ class DatabaseManager {
         const { data, error } = await this.client
           .from('gallon_transactions')
           .update(enrichedData)
-          .eq('id', id)
           .select();
 
         if (error) throw error;
@@ -373,7 +344,7 @@ class DatabaseManager {
     return { success: false, message: 'Data tidak ditemukan' };
   }
 
-  // DELETE: Hapus Transaksi
+  // DELETE: Hapus Catatan Mutasi
   async deleteTransaction(id) {
     if (this.isSupabaseConnected()) {
       try {
@@ -396,7 +367,7 @@ class DatabaseManager {
   }
 
   // --------------------------------------------------------------------------
-  // OPERASI INVENTARIS & STOK GALON
+  // OPERASI INVENTARIS & STOK FISIK GALON
   // --------------------------------------------------------------------------
 
   async getInventory() {
@@ -442,25 +413,48 @@ class DatabaseManager {
     return { success: true, data: newInventory };
   }
 
-  // Update stok lokal saat ada transaksi baru
-  autoUpdateLocalStock(tx) {
-    const inv = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_INVENTORY) || JSON.stringify(DEFAULT_INVENTORY));
+  // Otomatis menyesuaikan stok fisik galon berdasarkan jenis mutasi
+  async autoUpdateStock(tx) {
+    const inv = await this.getInventory();
     const qty = parseInt(tx.gallon_qty) || 0;
+    if (qty <= 0) return;
 
-    if (qty > 0 && tx.type === 'pemasukan') {
+    if (tx.type === 'keluar') {
       if (tx.category === 'Isi Ulang Galon') {
-        // Penjualan isi ulang: stok isi berkurang, stok kosong bertambah (tukar galon)
+        // Penjualan isi ulang: galon isi berkurang, galon kosong bertambah (tukar galon)
         inv.stock_filled = Math.max(0, (inv.stock_filled || 0) - qty);
         inv.stock_empty = (inv.stock_empty || 0) + qty;
       } else if (tx.category === 'Galon Baru + Isi') {
-        // Penjualan galon baru: stok isi berkurang
+        // Penjualan galon baru beserta bodi: galon isi berkurang
         inv.stock_filled = Math.max(0, (inv.stock_filled || 0) - qty);
-      } else if (tx.category === 'Galon Titip/Pinjam') {
+      } else if (tx.category === 'Galon Dipinjamkan' || tx.category === 'Galon Titip/Pinjam') {
+        // Dipinjamkan ke pelanggan: galon isi berkurang, stok dipinjam bertambah
         inv.stock_filled = Math.max(0, (inv.stock_filled || 0) - qty);
         inv.stock_borrowed = (inv.stock_borrowed || 0) + qty;
+      } else if (tx.category === 'Galon Rusak / Pecah') {
+        // Rusak: galon kosong berkurang, stok rusak bertambah
+        inv.stock_empty = Math.max(0, (inv.stock_empty || 0) - qty);
+        inv.stock_broken = (inv.stock_broken || 0) + qty;
+      } else {
+        inv.stock_filled = Math.max(0, (inv.stock_filled || 0) - qty);
       }
-      localStorage.setItem(STORAGE_KEYS.LOCAL_INVENTORY, JSON.stringify(inv));
+    } else if (tx.type === 'masuk') {
+      if (tx.category === 'Pengadaan Galon Baru') {
+        // Pasokan galon kosong baru
+        inv.stock_empty = (inv.stock_empty || 0) + qty;
+      } else if (tx.category === 'Pengembalian Galon Pinjam') {
+        // Pelanggan mengembalikan pinjaman: stok dipinjam berkurang, galon kosong bertambah
+        inv.stock_borrowed = Math.max(0, (inv.stock_borrowed || 0) - qty);
+        inv.stock_empty = (inv.stock_empty || 0) + qty;
+      } else if (tx.category === 'Pasokan Galon Isi Pabrik') {
+        // Galon isi datang dari pabrik
+        inv.stock_filled = (inv.stock_filled || 0) + qty;
+      } else {
+        inv.stock_empty = (inv.stock_empty || 0) + qty;
+      }
     }
+
+    await this.updateInventory(inv);
   }
 
   // --------------------------------------------------------------------------
@@ -481,8 +475,11 @@ class DatabaseManager {
       const uploadPayload = localList.map(t => {
         const item = { ...t };
         if (item.id && (item.id.startsWith('local-') || item.id.startsWith('demo-'))) {
-          delete item.id; // Supabase akan menggenerate UUID baru
+          delete item.id;
         }
+        delete item.amount;
+        delete item.unit_price;
+        delete item.payment_method;
         return item;
       });
 

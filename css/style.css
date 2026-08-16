@@ -690,6 +690,8 @@ body {
 .inventory-item.filled .inventory-icon { background-color: var(--primary-100); color: var(--primary-700); }
 .inventory-item.empty .inventory-icon { background-color: var(--warning-100); color: var(--warning-700); }
 .inventory-item.borrowed .inventory-icon { background-color: var(--purple-500); color: white; }
+.inventory-item.broken .inventory-icon { background-color: var(--danger-50); color: var(--danger-600); }
+[data-theme="dark"] .inventory-item.broken .inventory-icon { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
 
 .inventory-info h5 {
   font-size: 0.75rem;
@@ -885,25 +887,25 @@ body {
   white-space: nowrap;
 }
 
-.badge-income {
+.badge-income, .badge-in {
   background-color: var(--success-50);
   color: var(--success-700);
   border: 1px solid var(--success-100);
 }
 
-[data-theme="dark"] .badge-income {
+[data-theme="dark"] .badge-income, [data-theme="dark"] .badge-in {
   background-color: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-.badge-expense {
+.badge-expense, .badge-out {
   background-color: var(--danger-50);
   color: var(--danger-700);
   border: 1px solid var(--danger-100);
 }
 
-[data-theme="dark"] .badge-expense {
+[data-theme="dark"] .badge-expense, [data-theme="dark"] .badge-out {
   background-color: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border-color: rgba(239, 68, 68, 0.3);
@@ -1115,24 +1117,28 @@ body {
   display: none;
 }
 
-.type-switch-input:checked + .type-switch-label.income-label {
+.type-switch-input:checked + .type-switch-label.income-label,
+.type-switch-input:checked + .type-switch-label.in-label {
   border-color: var(--success-500);
   background-color: var(--success-50);
   color: var(--success-700);
 }
 
-[data-theme="dark"] .type-switch-input:checked + .type-switch-label.income-label {
+[data-theme="dark"] .type-switch-input:checked + .type-switch-label.income-label,
+[data-theme="dark"] .type-switch-input:checked + .type-switch-label.in-label {
   background-color: rgba(16, 185, 129, 0.15);
   color: #34d399;
 }
 
-.type-switch-input:checked + .type-switch-label.expense-label {
+.type-switch-input:checked + .type-switch-label.expense-label,
+.type-switch-input:checked + .type-switch-label.out-label {
   border-color: var(--danger-500);
   background-color: var(--danger-50);
   color: var(--danger-700);
 }
 
-[data-theme="dark"] .type-switch-input:checked + .type-switch-label.expense-label {
+[data-theme="dark"] .type-switch-input:checked + .type-switch-label.expense-label,
+[data-theme="dark"] .type-switch-input:checked + .type-switch-label.out-label {
   background-color: rgba(239, 68, 68, 0.15);
   color: #f87171;
 }

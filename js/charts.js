@@ -1,9 +1,9 @@
 /**
  * ==============================================================================
- * AQUAFLOW - CHARTS & VISUALIZATION MODULE (CHART.JS)
+ * AQUAFLOW - CHARTS & VISUALIZATION MODULE (CHART.JS - STOCK MANAGEMENT)
  * ==============================================================================
- * Modul ini merender grafik tren keuangan, grafik volume penjualan galon,
- * dan diagram donat distribusi kategori dengan dukungan Dark/Light theme.
+ * Modul ini merender grafik tren mutasi galon (Keluar vs Masuk)
+ * dan diagram donat distribusi volume galon per kategori.
  */
 
 class ChartManager {
@@ -22,14 +22,14 @@ class ChartManager {
       primaryFill: isDark ? 'rgba(14, 165, 233, 0.15)' : 'rgba(14, 165, 233, 0.1)',
       success: '#10b981',
       successFill: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
-      danger: '#ef4444',
-      dangerFill: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+      danger: '#f43f5e',
+      dangerFill: isDark ? 'rgba(244, 63, 94, 0.15)' : 'rgba(244, 63, 94, 0.1)',
       warning: '#f59e0b',
-      palette: ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6']
+      palette: ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6', '#f97316']
     };
   }
 
-  // Render atau Update Grafik Tren Finansial (Line Chart Pemasukan vs Pengeluaran)
+  // Render Grafik Tren Mutasi Galon (Galon Keluar vs Galon Masuk)
   renderTrendChart(canvasId, dateAggregatedData) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || typeof Chart === 'undefined') return;
@@ -38,9 +38,8 @@ class ChartManager {
     const colors = this.getThemeColors();
 
     const labels = dateAggregatedData.map(d => d.label);
-    const incomeData = dateAggregatedData.map(d => d.income);
-    const expenseData = dateAggregatedData.map(d => d.expense);
-    const gallonData = dateAggregatedData.map(d => d.gallonQty);
+    const outData = dateAggregatedData.map(d => d.gallonsOut);
+    const inData = dateAggregatedData.map(d => d.gallonsIn);
 
     if (this.trendChart) {
       this.trendChart.destroy();
@@ -52,8 +51,20 @@ class ChartManager {
         labels: labels.length ? labels : ['Tidak Ada Data'],
         datasets: [
           {
-            label: 'Pemasukan (Rp)',
-            data: incomeData.length ? incomeData : [0],
+            label: 'Galon Keluar (Terjual/Dipinjam)',
+            data: outData.length ? outData : [0],
+            borderColor: colors.danger,
+            backgroundColor: colors.dangerFill,
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: colors.danger
+          },
+          {
+            label: 'Galon Masuk (Pasokan/Kembali)',
+            data: inData.length ? inData : [0],
             borderColor: colors.success,
             backgroundColor: colors.successFill,
             borderWidth: 2.5,
@@ -62,18 +73,6 @@ class ChartManager {
             pointRadius: 4,
             pointHoverRadius: 6,
             pointBackgroundColor: colors.success
-          },
-          {
-            label: 'Pengeluaran (Rp)',
-            data: expenseData.length ? expenseData : [0],
-            borderColor: colors.danger,
-            backgroundColor: colors.dangerFill,
-            borderWidth: 2,
-            fill: true,
-            tension: 0.35,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: colors.danger
           }
         ]
       },
@@ -102,7 +101,7 @@ class ChartManager {
             cornerRadius: 8,
             callbacks: {
               label: function(context) {
-                return ` ${context.dataset.label}: ${FilterManager.formatRupiah(context.raw)}`;
+                return ` ${context.dataset.label}: ${context.raw} Galon`;
               }
             }
           }
@@ -122,9 +121,7 @@ class ChartManager {
               color: colors.textColor,
               font: { family: 'Plus Jakarta Sans', size: 11 },
               callback: function(value) {
-                if (value >= 1000000) return (value / 1000000).toFixed(1) + ' Jt';
-                if (value >= 1000) return (value / 1000).toFixed(0) + ' Rb';
-                return value;
+                return Number.isInteger(value) ? `${value} Gln` : '';
               }
             }
           }
@@ -133,7 +130,7 @@ class ChartManager {
     });
   }
 
-  // Render atau Update Diagram Donat Distribusi Kategori
+  // Render Diagram Donat Distribusi Kategori Galon
   renderCategoryChart(canvasId, categoryData) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || typeof Chart === 'undefined') return;
@@ -187,7 +184,7 @@ class ChartManager {
             callbacks: {
               label: function(context) {
                 if (!hasData) return ' Tidak ada data';
-                return ` ${context.label}: ${FilterManager.formatRupiah(context.raw)}`;
+                return ` ${context.label}: ${context.raw} Galon`;
               }
             }
           }
@@ -196,7 +193,7 @@ class ChartManager {
     });
   }
 
-  // Refresh Semua Grafik (Misal saat ganti mode tema Dark/Light)
+  // Refresh Semua Grafik
   refreshCharts(trendData, categoryData) {
     if (trendData) this.renderTrendChart('trendChartCanvas', trendData);
     if (categoryData) this.renderCategoryChart('categoryChartCanvas', categoryData);

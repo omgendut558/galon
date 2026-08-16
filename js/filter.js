@@ -1,23 +1,12 @@
 /**
  * ==============================================================================
- * AQUAFLOW - MULTI-DIMENSIONAL FILTER & ANALYTICS MODULE
+ * AQUAFLOW - MULTI-DIMENSIONAL FILTER & ANALYTICS MODULE (STOCK MANAGEMENT)
  * ==============================================================================
- * Modul ini menangani penyaringan data transaksi berdasarkan tanggal, hari,
- * bulan, tahun, tipe, kategori, metode pembayaran, dan kalkulasi ringkasan KPI.
+ * Modul ini menangani penyaringan data mutasi stok galon berdasarkan tanggal,
+ * hari, bulan, tahun, tipe mutasi, kategori, dan kalkulasi ringkasan metrik galon.
  */
 
 const FilterManager = {
-  // Format Mata Uang Rupiah (Rp)
-  formatRupiah(number) {
-    if (isNaN(number) || number === null || number === undefined) return 'Rp 0';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(number);
-  },
-
   // Format Tanggal Indonesia (contoh: 16 Agustus 2026)
   formatDateIndo(dateStr) {
     if (!dateStr) return '-';
@@ -55,7 +44,7 @@ const FilterManager = {
     if (!Array.isArray(transactions)) return [];
 
     return transactions.filter(tx => {
-      // 1. Filter Tipe Transaksi (Semua / Pemasukan / Pengeluaran)
+      // 1. Filter Tipe Mutasi (Semua / Keluar / Masuk)
       if (criteria.type && criteria.type !== 'all' && tx.type !== criteria.type) {
         return false;
       }
@@ -65,24 +54,19 @@ const FilterManager = {
         return false;
       }
 
-      // 3. Filter Metode Pembayaran
-      if (criteria.payment_method && criteria.payment_method !== 'all' && tx.payment_method !== criteria.payment_method) {
-        return false;
-      }
-
-      // 4. Filter Pencarian Teks (Nama Pelanggan / Catatan / Kategori)
+      // 3. Filter Pencarian Teks (Nama Pelanggan / Catatan / Kategori)
       if (criteria.search && criteria.search.trim() !== '') {
         const query = criteria.search.toLowerCase().trim();
         const matchCustomer = (tx.customer_name || '').toLowerCase().includes(query);
         const matchNotes = (tx.notes || '').toLowerCase().includes(query);
         const matchCategory = (tx.category || '').toLowerCase().includes(query);
-        const matchAmount = String(tx.amount || '').includes(query);
-        if (!matchCustomer && !matchNotes && !matchCategory && !matchAmount) {
+        const matchQty = String(tx.gallon_qty || '').includes(query);
+        if (!matchCustomer && !matchNotes && !matchCategory && !matchQty) {
           return false;
         }
       }
 
-      // 5. Filter Berdasarkan Mode Waktu
+      // 4. Filter Berdasarkan Mode Waktu
       const txDate = tx.date ? new Date(tx.date + 'T00:00:00') : new Date();
       const txDayName = tx.day_name || getIndonesianDayName(txDate);
       const txMonth = tx.month || (txDate.getMonth() + 1);
@@ -170,46 +154,41 @@ const FilterManager = {
     });
   },
 
-  // Kalkulasi Ringkasan Finansial & Statistik (KPI)
+  // Kalkulasi Ringkasan Mutasi Stok Galon (KPI)
   calculateSummary(filteredTransactions) {
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let totalGallonsSold = 0;
+    let totalGallonsOut = 0;
+    let totalGallonsIn = 0;
     let totalTransactions = filteredTransactions.length;
     const uniqueDates = new Set();
 
     filteredTransactions.forEach(tx => {
-      const amount = parseFloat(tx.amount) || 0;
       const qty = parseInt(tx.gallon_qty) || 0;
-
       if (tx.date) uniqueDates.add(tx.date);
 
-      if (tx.type === 'pemasukan') {
-        totalIncome += amount;
-        totalGallonsSold += qty;
-      } else if (tx.type === 'pengeluaran') {
-        totalExpense += amount;
+      if (tx.type === 'keluar') {
+        totalGallonsOut += qty;
+      } else if (tx.type === 'masuk') {
+        totalGallonsIn += qty;
       }
     });
 
-    const netProfit = totalIncome - totalExpense;
+    const netGallonMovement = totalGallonsIn - totalGallonsOut;
     const activeDaysCount = Math.max(1, uniqueDates.size);
-    const avgSalesPerDay = totalIncome / activeDaysCount;
-    const avgGallonsPerDay = Math.round(totalGallonsSold / activeDaysCount);
+    const avgGallonsOutPerDay = Math.round(totalGallonsOut / activeDaysCount);
+    const avgGallonsInPerDay = Math.round(totalGallonsIn / activeDaysCount);
 
     return {
-      totalIncome,
-      totalExpense,
-      netProfit,
-      totalGallonsSold,
+      totalGallonsOut,
+      totalGallonsIn,
+      netGallonMovement,
       totalTransactions,
       activeDaysCount,
-      avgSalesPerDay,
-      avgGallonsPerDay
+      avgGallonsOutPerDay,
+      avgGallonsInPerDay
     };
   },
 
-  // Agregasi Data untuk Grafik Tren Waktu (Pemasukan vs Pengeluaran per Tanggal)
+  // Agregasi Data untuk Grafik Tren Waktu (Galon Keluar vs Galon Masuk per Tanggal)
   aggregateByDate(transactions) {
     const map = {};
 
@@ -219,18 +198,15 @@ const FilterManager = {
         map[dateKey] = {
           date: dateKey,
           label: FilterManager.formatDateShort(dateKey),
-          income: 0,
-          expense: 0,
-          gallonQty: 0
+          gallonsOut: 0,
+          gallonsIn: 0
         };
       }
-      const amt = parseFloat(tx.amount) || 0;
       const qty = parseInt(tx.gallon_qty) || 0;
-      if (tx.type === 'pemasukan') {
-        map[dateKey].income += amt;
-        map[dateKey].gallonQty += qty;
-      } else if (tx.type === 'pengeluaran') {
-        map[dateKey].expense += amt;
+      if (tx.type === 'keluar') {
+        map[dateKey].gallonsOut += qty;
+      } else if (tx.type === 'masuk') {
+        map[dateKey].gallonsIn += qty;
       }
     });
 
@@ -244,34 +220,34 @@ const FilterManager = {
     const daysOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
     const summary = {};
     daysOrder.forEach(d => {
-      summary[d] = { day: d, income: 0, gallons: 0, count: 0 };
+      summary[d] = { day: d, gallonsOut: 0, gallonsIn: 0, count: 0 };
     });
 
     transactions.forEach(tx => {
       const day = tx.day_name;
       if (summary[day]) {
-        const amt = parseFloat(tx.amount) || 0;
         const qty = parseInt(tx.gallon_qty) || 0;
-        if (tx.type === 'pemasukan') {
-          summary[day].income += amt;
-          summary[day].gallons += qty;
-          summary[day].count += 1;
+        if (tx.type === 'keluar') {
+          summary[day].gallonsOut += qty;
+        } else if (tx.type === 'masuk') {
+          summary[day].gallonsIn += qty;
         }
+        summary[day].count += 1;
       }
     });
 
     return Object.values(summary);
   },
 
-  // Agregasi Komposisi Kategori untuk Diagram Donat
-  aggregateByCategory(transactions, type = 'pemasukan') {
+  // Agregasi Komposisi Kategori untuk Diagram Donat (Berdasarkan Qty Galon)
+  aggregateByCategory(transactions, type = 'keluar') {
     const catMap = {};
     transactions
-      .filter(tx => tx.type === type)
+      .filter(tx => (type === 'all' ? true : tx.type === type))
       .forEach(tx => {
         const cat = tx.category || 'Lain-lain';
-        const amt = parseFloat(tx.amount) || 0;
-        catMap[cat] = (catMap[cat] || 0) + amt;
+        const qty = parseInt(tx.gallon_qty) || 0;
+        catMap[cat] = (catMap[cat] || 0) + qty;
       });
 
     return {
