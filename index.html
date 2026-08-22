@@ -1,832 +1,850 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Aplikasi Pencatatan & Manajemen Stok Galon Depot Modern berbasis Tanggal, Hari, Bulan, dan Tahun dengan Supabase Database, Autentikasi Login, dan CRUD.">
-  <title>AquaFlow - Catatan & Mutasi Stok Galon Depot</title>
-  
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/style.css">
-  
-  <!-- CDN Libraries -->
-  <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Chart.js for Data Visualizations -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- SheetJS for Excel XLSX Export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>GalonTracker - Manajemen Stok Galon Depot</title>
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main>:first-child {
+                margin-top: 0 !important;
+            }
+
+            main>:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        button:disabled,
+        input:disabled,
+        textarea:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-high": "#e8e7f1", "surface-container-lowest": "#ffffff", "surface-variant": "#e3e1ec", "secondary-container": "#dfdfe0", "on-secondary-container": "#616364", "on-secondary-fixed": "#1a1c1d", "on-primary-fixed": "#1c1b1b", "tertiary": "#000000", "outline": "#747878", "tertiary-fixed-dim": "#adc6ff", "error-container": "#ffdad6", "on-primary-container": "#858383", "on-secondary-fixed-variant": "#454748", "on-tertiary-fixed": "#001a41", "on-tertiary-container": "#2480ff", "inverse-surface": "#2f3038", "surface-tint": "#5f5e5e", "on-secondary": "#ffffff", "primary-fixed-dim": "#c8c6c5", "on-tertiary": "#ffffff", "on-error": "#ffffff", "error": "#ba1a1a", "outline-variant": "#c4c7c7", "surface-dim": "#dad9e3", "surface-container": "#eeedf7", "on-background": "#1a1b22", "on-surface-variant": "#444748", "secondary": "#5d5e60", "surface-container-highest": "#e3e1ec", "on-primary-fixed-variant": "#474646", "secondary-fixed-dim": "#c6c6c7", "secondary-fixed": "#e2e2e3", "surface-container-low": "#f4f2fd", "on-primary": "#ffffff", "inverse-on-surface": "#f1effa", "on-surface": "#1a1b22", "on-tertiary-fixed-variant": "#004493", "surface-bright": "#fbf8ff", "primary-container": "#1c1b1b", "tertiary-container": "#001a41", "on-error-container": "#93000a", "tertiary-fixed": "#d8e2ff", "surface": "#fbf8ff", "background": "#fbf8ff", "primary": "#000000", "inverse-primary": "#c8c6c5", "primary-fixed": "#e5e2e1" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "container-max": "1440px", "gutter": "24px", "unit": "4px", "margin-desktop": "48px", "margin-mobile": "16px" }, "fontFamily": { "body-lg": ["Inter"], "headline-md": ["Inter"], "label-md": ["Inter"], "data-mono": ["JetBrains Mono"], "body-md": ["Inter"], "headline-sm": ["Inter"], "headline-lg": ["Inter"], "label-sm": ["Inter"] }, "fontSize": { "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "500" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500" }] } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
+    <style>
+        .hide-arrows::-webkit-outer-spin-button,
+        .hide-arrows::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .hide-arrows {
+            -moz-appearance: textfield;
+        }
+
+        th[data-sort] .sort-icon {
+            opacity: 0.35;
+            transition: opacity .15s ease, transform .15s ease;
+        }
+
+        th[data-sort]:hover .sort-icon {
+            opacity: 0.8;
+        }
+
+        th[data-sort].sorted .sort-icon {
+            opacity: 1;
+            color: #000000;
+        }
+
+        th[data-sort] {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th[data-sort].sorted {
+            color: #1a1b22 !important;
+            font-weight: 600;
+        }
+
+        .toast-enter {
+            animation: toast-in .25s ease forwards;
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .pg-btn.active {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        dialog::backdrop {
+            background: rgba(26, 27, 34, .45);
+            backdrop-filter: blur(2px);
+        }
+
+        dialog[open] {
+            animation: dlg-in .18s ease;
+        }
+
+        @keyframes dlg-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .skeleton {
+            position: relative;
+            overflow: hidden;
+            background: #e3e1ec;
+            border-radius: 0.25rem;
+        }
+
+        .skeleton::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent);
+            animation: shimmer 1.4s infinite;
+        }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
 </head>
-<body>
 
-  <!-- Fullscreen Auth Screen Overlay (Login / Register Gatekeeper) -->
-  <div id="authOverlay" class="auth-overlay active">
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-logo">
-          <i data-lucide="boxes"></i>
+<body class="bg-background font-body-md text-on-surface">
+
+    <!-- ======================= SIDEBAR ======================= -->
+    <aside id="sidebar"
+        class="fixed left-0 top-0 h-full w-72 sm:w-64 bg-surface-container-lowest border-r border-outline-variant z-[60] flex flex-col pt-spacing-margin-desktop transition-transform duration-200 ease-out -translate-x-full lg:translate-x-0">
+        <div class="px-6 sm:px-8 mb-spacing-margin-desktop flex items-center gap-3">
+            <img src="https://img.icons8.com/?size=100&id=vhXiAXW04PHU&format=png&color=000000" alt="Logo GalonTracker"
+                class="w-10 h-10 object-contain shrink-0">
+            <span class="font-headline-sm text-headline-sm text-primary tracking-tight">GalonTracker</span>
         </div>
-        <h2 class="auth-title">Aqua<span>Flow</span></h2>
-        <p class="auth-subtitle">Sistem Manajemen & Stok Depot Air Galon</p>
-      </div>
-
-      <!-- Auth Tab Switcher (Masuk vs Daftar) -->
-      <div class="auth-tabs">
-        <button type="button" id="tabLogin" class="auth-tab-btn active">Masuk (Login)</button>
-        <button type="button" id="tabRegister" class="auth-tab-btn">Daftar Akun</button>
-      </div>
-
-      <div class="auth-body">
-        <!-- Alert Box -->
-        <div id="authAlert" class="auth-alert"></div>
-
-        <!-- Login / Register Form -->
-        <form id="authForm">
-          <!-- Name Input (Only shown on register) -->
-          <div id="authNameGroup" class="form-group" style="display: none; margin-bottom: 0.85rem;">
-            <label class="form-label">Nama Lengkap / Nama Depot *</label>
-            <input type="text" id="authNameInput" class="form-control" placeholder="Contoh: Depot Air Sejahtera">
-          </div>
-
-          <!-- Email Input -->
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Alamat Email *</label>
-            <input type="email" id="authEmailInput" class="form-control" required placeholder="admin@depotair.com">
-          </div>
-
-          <!-- Password Input -->
-          <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label">Password *</label>
-            <div class="password-input-wrap">
-              <input type="password" id="authPasswordInput" class="form-control" required placeholder="Minimal 6 karakter" minlength="6">
-              <button type="button" id="btnTogglePassword" class="toggle-password-btn" title="Lihat Password">
-                <i data-lucide="eye" id="eyeIcon" style="width: 15px; height: 15px;"></i>
-              </button>
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+            <a data-view="dashboard" data-nav href="#" aria-current="page"
+                class="flex items-center px-4 py-3 rounded transition-all bg-secondary-container text-on-secondary-fixed-variant">
+                <span class="material-symbols-outlined mr-3 text-[20px]">dashboard</span><span
+                    class="font-label-md text-label-md">Dashboard</span>
+            </a>
+            <a data-view="riwayat" data-nav href="#"
+                class="flex items-center px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+                <span class="material-symbols-outlined mr-3 text-[20px]">history</span><span
+                    class="font-label-md text-label-md">Riwayat Transaksi</span>
+            </a>
+            <a data-view="pengaturan" data-nav href="#"
+                class="flex items-center px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+                <span class="material-symbols-outlined mr-3 text-[20px]">settings</span><span
+                    class="font-label-md text-label-md">Pengaturan</span>
+            </a>
+        </nav>
+        <div
+            class="p-4 border-t border-outline-variant/40 mx-2 mb-4 rounded bg-surface-container-low flex items-center gap-3">
+            <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-outline shrink-0"></span>
+            <div class="min-w-0">
+                <div id="dbStatusText" class="font-label-sm text-label-sm text-on-surface truncate">Menghubungkan...
+                </div>
+                <div class="font-label-sm text-label-sm text-on-surface-variant">Database Supabase</div>
             </div>
-          </div>
+        </div>
+        <button id="btnCloseSidebar" title="Tutup menu"
+            class="lg:hidden absolute top-4 right-3 w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+    </aside>
 
-          <!-- Submit Button -->
-          <button type="submit" id="btnAuthSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem;">
-            <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
-            <span id="btnAuthSubmitText">Masuk ke Dashboard</span>
-          </button>
+    <!-- Backdrop sidebar (mobile) -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/40 z-[55] hidden lg:!hidden"></div>
+
+    <div class="lg:pl-64">
+        <!-- ======================= HEADER ======================= -->
+        <header
+            class="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant z-40 flex items-center justify-between px-spacing-gutter lg:px-spacing-margin-desktop gap-3">
+            <div class="flex items-center gap-2 min-w-0">
+                <button id="btnSidebarToggle" title="Buka menu"
+                    class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors shrink-0">
+                    <span class="material-symbols-outlined text-[22px]">menu</span>
+                </button>
+                <img src="https://img.icons8.com/?size=100&id=vhXiAXW04PHU&format=png&color=000000" alt=""
+                    class="w-7 h-7 object-contain shrink-0 lg:hidden">
+                <h2 id="headerTitle"
+                    class="font-headline-sm text-headline-sm text-on-surface truncate max-w-[50vw] sm:max-w-none">Dashboard
+                    Utama</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center gap-2 font-data-mono text-data-mono text-on-surface-variant">
+                    <span class="material-symbols-outlined text-[18px]">schedule</span>
+                    <span id="liveClock">-</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="btnLogout" title="Keluar dari akun"
+                        class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">logout</span>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <div id="userNameText" class="font-label-md text-label-md text-on-surface">Admin User</div>
+                        <div id="userEmailText" class="font-label-sm text-label-sm text-on-surface-variant">-</div>
+                    </div>
+                    <div id="userAvatar"
+                        class="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-label-md text-label-md text-on-primary">
+                        AD</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ======================= MAIN ======================= -->
+        <main class="relative pt-16 min-h-screen bg-background">
+            <div class="flex flex-col w-full p-spacing-gutter">
+
+                <!-- ============ VIEW: DASHBOARD ============ -->
+                <section id="view-dashboard" class="view active">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-spacing-gutter">
+                        <div class="md:col-span-12">
+                            <h1 class="font-headline-md text-headline-md text-on-surface mb-spacing-unit">Dashboard
+                                Utama</h1>
+                            <p class="font-body-md text-body-md text-on-surface-variant">Kelola stok dan pantau
+                                pergerakan galon hari ini.</p>
+                        </div>
+
+                        <div class="md:col-span-8 flex flex-col gap-spacing-gutter">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-spacing-gutter">
+                                <!-- Galon Terisi -->
+                                <div class="bg-surface-container shadow-sm p-6 flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Galon
+                                            Terisi</span>
+                                        <span
+                                            class="material-symbols-outlined text-primary text-[24px]">water_drop</span>
+                                    </div>
+                                    <div class="font-headline-lg text-headline-lg text-on-surface" id="kpiFilled">0
+                                    </div>
+                                    <div class="mt-4 flex items-center text-secondary">
+                                        <span class="material-symbols-outlined text-[16px] mr-1">inventory_2</span>
+                                        <span class="font-label-sm text-label-sm">Stok fisik siap jual</span>
+                                    </div>
+                                </div>
+                                <!-- Galon Kosong (editable) -->
+                                <div
+                                    class="bg-surface-container shadow-sm p-6 flex flex-col justify-between relative group">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Galon
+                                            Kosong</span>
+                                        <span
+                                            class="material-symbols-outlined text-outline text-[24px]">ev_shadow</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="font-headline-lg text-headline-lg text-on-surface"
+                                            id="kpiEmptyDisplay">0</div>
+                                        <div
+                                            class="flex items-center gap-2 bg-surface-container-highest rounded-full p-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                            <button type="button"
+                                                class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"
+                                                data-step="-1"><span
+                                                    class="material-symbols-outlined text-[18px]">remove</span></button>
+                                            <input
+                                                class="w-12 text-center bg-transparent border-none focus:ring-0 font-data-mono text-data-mono text-on-surface p-0 m-0 hide-arrows outline-none"
+                                                id="kpiEmptyInput" type="number" value="0">
+                                            <button type="button"
+                                                class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"
+                                                data-step="1"><span
+                                                    class="material-symbols-outlined text-[18px]">add</span></button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex items-center text-on-surface-variant">
+                                        <span class="material-symbols-outlined text-[16px] mr-1">info</span>
+                                        <span class="font-label-sm text-label-sm">Bisa diubah manual</span>
+                                    </div>
+                                </div>
+                                <!-- Masuk hari ini -->
+                                <div class="bg-surface-container shadow-sm p-6 flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Galon
+                                            Masuk Hari Ini</span>
+                                        <span class="material-symbols-outlined text-primary text-[24px]">add_box</span>
+                                    </div>
+                                    <div class="font-headline-lg text-headline-lg text-on-surface" id="kpiInToday">0
+                                    </div>
+                                    <div class="mt-4 flex items-center text-primary">
+                                        <span class="material-symbols-outlined text-[16px] mr-1">add</span>
+                                        <span class="font-label-sm text-label-sm">Total hari ini</span>
+                                    </div>
+                                </div>
+                                <!-- Keluar hari ini -->
+                                <div class="bg-surface-container shadow-sm p-6 flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Galon
+                                            Keluar Hari Ini</span>
+                                        <span class="material-symbols-outlined text-error text-[24px]">outbox</span>
+                                    </div>
+                                    <div class="font-headline-lg text-headline-lg text-on-surface" id="kpiOutToday">0
+                                    </div>
+                                    <div class="mt-4 flex items-center text-error">
+                                        <span class="material-symbols-outlined text-[16px] mr-1">remove</span>
+                                        <span class="font-label-sm text-label-sm">Total hari ini</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Riwayat terakhir -->
+                            <div class="bg-surface-container shadow-sm flex flex-col overflow-hidden">
+                                <div
+                                    class="p-6 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
+                                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Riwayat Transaksi
+                                        Terakhir</h2>
+                                    <a class="font-label-md text-label-md text-primary hover:underline cursor-pointer"
+                                        data-goto="riwayat">Lihat Semua</a>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-surface-container border-b border-outline-variant/30">
+                                                <th
+                                                    class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                    Tanggal</th>
+                                                <th
+                                                    class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                    Tipe</th>
+                                                <th
+                                                    class="p-4 font-label-md text-label-md text-on-surface-variant font-normal text-right">
+                                                    Qty</th>
+                                                <th
+                                                    class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                    Catatan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentTbody" class="font-body-md text-body-md text-on-surface">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form catat pergerakan -->
+                        <div class="md:col-span-4">
+                            <form id="txForm"
+                                class="bg-surface-container shadow-sm p-6 md:sticky md:top-24 flex flex-col">
+                                <h2 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center">
+                                    <span class="material-symbols-outlined mr-2">add_circle</span> Catat Pergerakan
+                                </h2>
+                                <div class="mb-5">
+                                    <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Tipe
+                                        Pergerakan</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <label class="cursor-pointer">
+                                            <input checked class="peer sr-only" name="pergerakan" type="radio"
+                                                value="keluar">
+                                            <div
+                                                class="p-3 text-center rounded border border-outline-variant peer-checked:bg-error peer-checked:text-on-error peer-checked:border-error transition-colors font-body-md text-body-md">
+                                                Keluar</div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input class="peer sr-only" name="pergerakan" type="radio" value="masuk">
+                                            <div
+                                                class="p-3 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary transition-colors font-body-md text-body-md">
+                                                Masuk</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 mb-5">
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Tanggal</label>
+                                        <input id="txDate" type="date" required
+                                            class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Waktu</label>
+                                        <input id="txTime" type="time" required
+                                            class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Jumlah
+                                        Galon</label>
+                                    <input id="txQty" min="1" placeholder="0" required type="number"
+                                        class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none transition-shadow hide-arrows">
+                                </div>
+                                <div class="mb-5">
+                                    <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Nama
+                                        Pelanggan / Vendor</label>
+                                    <input id="txCustomer" placeholder="Misal: Warung Bu Siti / Supplier A" type="text"
+                                        class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none transition-shadow">
+                                </div>
+                                <div class="mb-5">
+                                    <label
+                                        class="block font-label-md text-label-md text-on-surface-variant mb-2">Catatan
+                                        Keterangan</label>
+                                    <textarea id="txNotes" rows="3"
+                                        placeholder="Misal: Dari supplier A / Pengiriman area B"
+                                        class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"></textarea>
+                                </div>
+                                <button id="txSubmitBtn"
+                                    class="w-full bg-primary text-on-primary py-3 rounded font-label-md text-label-md uppercase tracking-wider hover:bg-primary/90 transition-colors mt-2 flex items-center justify-center gap-2"
+                                    type="submit">
+                                    <span class="material-symbols-outlined text-[16px]">save</span> Simpan Data
+                                </button>
+                                <p
+                                    class="mt-3 font-label-sm text-label-sm text-on-surface-variant flex items-start gap-1">
+                                    <span class="material-symbols-outlined text-[14px] mt-[1px]">sync</span>
+                                    Stok fisik otomatis menyesuaikan tipe mutasi.
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============ VIEW: RIWAYAT TRANSAKSI ============ -->
+                <section id="view-riwayat" class="view">
+                    <div class="flex flex-col gap-spacing-gutter">
+                        <div class="flex items-end justify-between flex-wrap gap-2">
+                            <div>
+                                <h1 class="font-headline-md text-headline-md text-on-surface mb-spacing-unit">Riwayat
+                                    Transaksi</h1>
+                                <p class="font-body-md text-body-md text-on-surface-variant">Semua catatan mutasi galon,
+                                    lengkap dengan filter, urutan, dan halaman.</p>
+                            </div>
+                            <span id="rowCountBadge"
+                                class="font-label-md text-label-md bg-secondary-container text-on-secondary-fixed-variant px-3 py-2 rounded">0
+                                Data</span>
+                        </div>
+
+                        <!-- Filter panel -->
+                        <div class="bg-surface-container shadow-sm p-6 flex flex-col gap-4">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center">
+                                    <span class="material-symbols-outlined mr-2 text-[20px]">filter_list</span> Filter
+                                    Data
+                                </h2>
+                                <button id="btnResetFilter"
+                                    class="font-label-md text-label-md flex items-center gap-1 text-on-surface-variant hover:text-on-surface px-3 py-2 rounded hover:bg-surface-container-high transition-colors">
+                                    <span class="material-symbols-outlined text-[16px]">restart_alt</span> Reset Filter
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div class="lg:col-span-2 relative">
+                                    <span
+                                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">search</span>
+                                    <input id="fltSearch" placeholder="Cari pelanggan, vendor, atau catatan..."
+                                        type="text"
+                                        class="w-full bg-surface-container-highest border-none pl-10 pr-3 py-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                </div>
+                                <select id="fltType"
+                                    class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="masuk">Masuk (+)</option>
+                                    <option value="keluar">Keluar (-)</option>
+                                </select>
+                                <select id="fltPreset"
+                                    class="sm:col-span-2 w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    <option value="today">Hari Ini</option>
+                                    <option value="yesterday">Kemarin</option>
+                                    <option value="last7days">7 Hari Terakhir</option>
+                                    <option value="thisMonth">Bulan Ini</option>
+                                    <option value="lastMonth">Bulan Lalu</option>
+                                    <option value="thisYear">Tahun Ini</option>
+                                    <option value="all">Semua Waktu</option>
+                                    <option value="custom">Rentang Kustom...</option>
+                                </select>
+                                <input id="fltStart" type="date"
+                                    class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none hidden"
+                                    title="Dari tanggal">
+                                <input id="fltEnd" type="date"
+                                    class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none hidden"
+                                    title="Sampai tanggal">
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="bg-surface-container shadow-sm flex flex-col overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-surface-container-low border-b border-outline-variant/30">
+                                            <th data-sort="tanggal"
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal sorted">
+                                                <span class="inline-flex items-center gap-1">Tanggal <span
+                                                        class="sort-icon material-symbols-outlined text-[16px]"
+                                                        data-sort-icon="tanggal">arrow_downward</span></span>
+                                            </th>
+                                            <th data-sort="type"
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                <span class="inline-flex items-center gap-1">Tipe <span
+                                                        class="sort-icon material-symbols-outlined text-[16px]"
+                                                        data-sort-icon="type">unfold_more</span></span>
+                                            </th>
+                                            <th data-sort="qty"
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal text-right">
+                                                <span class="inline-flex items-center gap-1">Jumlah <span
+                                                        class="sort-icon material-symbols-outlined text-[16px]"
+                                                        data-sort-icon="qty">unfold_more</span></span>
+                                            </th>
+                                            <th data-sort="customer_name"
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                <span class="inline-flex items-center gap-1">Pelanggan / Vendor <span
+                                                        class="sort-icon material-symbols-outlined text-[16px]"
+                                                        data-sort-icon="customer_name">unfold_more</span></span>
+                                            </th>
+                                            <th
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal">
+                                                Catatan</th>
+                                            <th
+                                                class="p-4 font-label-md text-label-md text-on-surface-variant font-normal text-right">
+                                                Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="txTbody" class="font-body-md text-body-md text-on-surface"></tbody>
+                                </table>
+                            </div>
+                            <!-- Pagination -->
+                            <div
+                                class="p-4 border-t border-outline-variant/30 bg-surface-container-low flex items-center justify-between flex-wrap gap-3">
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <span id="pageInfo"
+                                        class="font-label-md text-label-md text-on-surface-variant">Menampilkan 0 dari 0
+                                        data</span>
+                                    <select id="pageSize"
+                                        class="bg-surface-container-highest border-none px-2 py-2 rounded font-data-mono text-data-mono text-on-surface focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                                        title="Baris per halaman">
+                                        <option value="5">5 / halaman</option>
+                                        <option value="10" selected>10 / halaman</option>
+                                        <option value="25">25 / halaman</option>
+                                        <option value="50">50 / halaman</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-1" id="paginationControls">
+                                    <button id="pgFirst" title="Halaman pertama"
+                                        class="w-9 h-9 rounded flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                                        <span class="material-symbols-outlined text-[18px]">first_page</span>
+                                    </button>
+                                    <button id="pgPrev" title="Sebelumnya"
+                                        class="w-9 h-9 rounded flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                                    </button>
+                                    <div class="flex items-center gap-1" id="pgNumbers"></div>
+                                    <button id="pgNext" title="Selanjutnya"
+                                        class="w-9 h-9 rounded flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                                    </button>
+                                    <button id="pgLast" title="Halaman terakhir"
+                                        class="w-9 h-9 rounded flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                                        <span class="material-symbols-outlined text-[18px]">last_page</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============ VIEW: PENGATURAN ============ -->
+                <section id="view-pengaturan" class="view">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-spacing-gutter max-w-4xl">
+                        <div class="md:col-span-12">
+                            <h1 class="font-headline-md text-headline-md text-on-surface mb-spacing-unit">Pengaturan
+                            </h1>
+                            <p class="font-body-md text-body-md text-on-surface-variant">Kelola stok fisik galon depot
+                                dan informasi database.</p>
+                        </div>
+                        <div class="md:col-span-8">
+                            <form id="invForm" class="bg-surface-container shadow-sm p-6 flex flex-col">
+                                <h2 class="font-headline-sm text-headline-sm text-on-surface mb-2 flex items-center">
+                                    <span class="material-symbols-outlined mr-2">inventory</span> Stok Fisik Galon Depot
+                                </h2>
+                                <p class="font-body-md text-body-md text-on-surface-variant mb-6">Sesuaikan jumlah fisik
+                                    galon jika ada selisih stok opname.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Galon
+                                            Terisi (Siap Jual)</label>
+                                        <input id="invFilled" min="0" required type="number"
+                                            class="hide-arrows w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Galon
+                                            Kosong (Siap Isi)</label>
+                                        <input id="invEmpty" min="0" required type="number"
+                                            class="hide-arrows w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Galon
+                                            Dipinjam Pelanggan</label>
+                                        <input id="invBorrowed" min="0" required type="number"
+                                            class="hide-arrows w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block font-label-md text-label-md text-on-surface-variant mb-2">Galon
+                                            Rusak / Afkir</label>
+                                        <input id="invBroken" min="0" required type="number"
+                                            class="hide-arrows w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                </div>
+                                <button
+                                    class="self-start bg-primary text-on-primary px-6 py-3 rounded font-label-md text-label-md uppercase tracking-wider hover:bg-primary/90 transition-colors flex items-center gap-2"
+                                    type="submit">
+                                    <span class="material-symbols-outlined text-[16px]">save</span> Simpan Stok
+                                </button>
+                            </form>
+                        </div>
+                        <div class="md:col-span-8">
+                            <div class="bg-surface-container shadow-sm p-6">
+                                <h2 class="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center">
+                                    <span class="material-symbols-outlined mr-2">database</span> Informasi Database
+                                </h2>
+                                <div class="flex flex-col gap-2 font-body-md text-body-md">
+                                    <div
+                                        class="flex items-center justify-between gap-4 py-2 border-b border-outline-variant/30">
+                                        <span class="text-on-surface-variant">Status Koneksi</span>
+                                        <span id="dbInfoStatus"
+                                            class="font-label-md text-label-md px-3 py-1 rounded bg-surface-container-highest text-on-surface-variant">Memeriksa...</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between gap-4 py-2 border-b border-outline-variant/30">
+                                        <span class="text-on-surface-variant">Tabel Transaksi</span>
+                                        <span
+                                            class="font-data-mono text-data-mono text-on-surface">gallon_transactions</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between gap-4 py-2 border-b border-outline-variant/30">
+                                        <span class="text-on-surface-variant">Tabel Inventaris</span>
+                                        <span
+                                            class="font-data-mono text-data-mono text-on-surface">gallon_inventory</span>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-4 py-2">
+                                        <span class="text-on-surface-variant">Project URL</span>
+                                        <span id="dbUrlText"
+                                            class="font-data-mono text-data-mono text-on-surface truncate max-w-[320px]">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- ======================= MODAL EDIT ======================= -->
+    <dialog id="editModal" class="w-full max-w-md rounded-xl bg-surface-container-lowest p-0 text-on-surface">
+        <form id="editForm" method="dialog" class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center">
+                    <span class="material-symbols-outlined mr-2">edit</span> Edit Transaksi
+                </h3>
+                <button type="button" onclick="editModal.close()"
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Tipe Pergerakan</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input class="peer sr-only" name="edPergerakan" type="radio" value="keluar">
+                        <div
+                            class="p-3 text-center rounded border border-outline-variant peer-checked:bg-error peer-checked:text-on-error peer-checked:border-error transition-colors font-body-md text-body-md">
+                            Keluar</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input class="peer sr-only" name="edPergerakan" type="radio" value="masuk">
+                        <div
+                            class="p-3 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary transition-colors font-body-md text-body-md">
+                            Masuk</div>
+                    </label>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Tanggal</label>
+                    <input id="edDate" type="date" required
+                        class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Waktu</label>
+                    <input id="edTime" type="time" required
+                        class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Jumlah Galon</label>
+                <input id="edQty" min="1" required type="number"
+                    class="hide-arrows w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+            </div>
+            <div class="mb-4">
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Nama Pelanggan /
+                    Vendor</label>
+                <input id="edCustomer" type="text"
+                    class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+            </div>
+            <div class="mb-6">
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Catatan Keterangan</label>
+                <textarea id="edNotes" rows="3"
+                    class="w-full bg-surface-container-highest border-none p-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none resize-none"></textarea>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="editModal.close()"
+                    class="px-5 py-3 rounded border border-outline-variant font-label-md text-label-md uppercase tracking-wider text-on-surface hover:bg-surface-container-high transition-colors">Batal</button>
+                <button type="submit"
+                    class="px-5 py-3 rounded bg-primary text-on-primary font-label-md text-label-md uppercase tracking-wider hover:bg-primary/90 transition-colors">Simpan
+                    Perubahan</button>
+            </div>
         </form>
+    </dialog>
 
-        <div class="auth-divider">
-          <span>atau</span>
-        </div>
-
-        <!-- Guest / Offline Demo Login Button -->
-        <button type="button" id="btnGuestLogin" class="btn-guest" title="Gunakan langsung tanpa email Supabase">
-          <i data-lucide="user-check" style="width: 15px; height: 15px;"></i>
-          <span>Masuk Mode Offline / Tamu</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Print Only Header -->
-  <div class="print-report-header" style="display: none;">
-    <h2>LAPORAN REKAPITULASI MUTASI & STOK GALON DEPOT</h2>
-    <p id="printPeriodDesc">Periode Laporan: -</p>
-  </div>
-
-  <!-- Header & Navigation Bar -->
-  <header class="app-header">
-    <div class="container header-inner">
-      <div class="brand-group">
-        <div class="brand-icon">
-          <i data-lucide="boxes"></i>
-        </div>
-        <div>
-          <div class="brand-title heading-font">
-            Aqua<span>Flow</span>
-            <span class="brand-badge">STOK DEPOT</span>
-          </div>
-          <div class="brand-subtitle">Catatan & Mutasi Stok Galon Depot</div>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <!-- Live Date & Clock -->
-        <div class="current-datetime">
-          <i data-lucide="clock" style="width: 14px; height: 14px; color: var(--primary-500);"></i>
-          <span id="currentDateText">-</span>
-        </div>
-
-        <!-- Database Connection Indicator Pill -->
-        <div id="dbStatusPill" class="db-status-pill" title="Klik untuk pengaturan Supabase / Local DB">
-          <span id="statusDot" class="status-dot offline"></span>
-          <span id="dbStatusText">Local Storage</span>
-          <i data-lucide="database" style="width: 13px; height: 13px;"></i>
-        </div>
-
-        <!-- User Authentication Profile Pill & Logout -->
-        <div id="userProfileWrap" class="user-profile-group" style="display: none;">
-          <div class="user-profile-pill" title="Akun Pengguna Aktif">
-            <span id="userAvatar" class="user-avatar">AD</span>
-            <span id="userNameText" class="user-name-text">Admin Depot</span>
-          </div>
-          <button id="btnLogout" class="btn-logout" title="Keluar dari Akun">
-            <i data-lucide="log-out" style="width: 13px; height: 13px;"></i>
-            <span>Keluar</span>
-          </button>
-        </div>
-
-        <!-- Theme Switcher -->
-        <button id="themeToggleBtn" class="theme-toggle-btn" title="Ganti Mode Gelap / Terang">
-          <i data-lucide="moon" id="themeIcon"></i>
-        </button>
-
-        <!-- Supabase Settings Button -->
-        <button id="btnOpenDbConfig" class="btn btn-outline btn-sm" title="Pengaturan Database Supabase">
-          <i data-lucide="settings" style="width: 14px; height: 14px;"></i>
-          <span>Pengaturan DB</span>
-        </button>
-
-        <!-- Help Guide Button -->
-        <button id="btnOpenHelp" class="btn btn-outline btn-sm" title="Panduan Setup Database & Deploy">
-          <i data-lucide="help-circle" style="width: 14px; height: 14px;"></i>
-          <span>Panduan</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="container app-main">
-
-    <!-- Quick Action / Bar Transaksi Cepat -->
-    <section class="quick-action-bar">
-      <div class="quick-bar-content">
-        <div class="quick-bar-title">
-          <div class="quick-bar-icon">
-            <i data-lucide="zap"></i>
-          </div>
-          <div class="quick-bar-text">
-            <h4>Pencatatan Cepat Stok Galon</h4>
-            <p>Klik 1-kali untuk mencatat mutasi galon keluar/terjual secara instan</p>
-          </div>
-        </div>
-
-        <div class="quick-btn-group">
-          <button class="btn-quick" data-quick-action="refill-1" title="Catat 1 Galon Isi Ulang Terjual">
-            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
-            <span>1 Isi Ulang</span>
-          </button>
-          <button class="btn-quick" data-quick-action="refill-5" title="Catat 5 Galon Isi Ulang Terjual">
-            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
-            <span>5 Isi Ulang</span>
-          </button>
-          <button class="btn-quick" data-quick-action="refill-10" title="Catat 10 Galon Isi Ulang Terjual">
-            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
-            <span>10 Isi Ulang</span>
-          </button>
-          <button class="btn-quick" data-quick-action="new-1" title="Catat 1 Galon Baru Terjual">
-            <i data-lucide="package-plus" style="width: 14px; height: 14px;"></i>
-            <span>1 Galon Baru</span>
-          </button>
-          <button id="btnOpenAddTxModal" class="btn btn-primary btn-sm">
-            <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
-            <span>+ Catat Mutasi Galon</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- KPI Summary Cards Grid -->
-    <section class="stats-grid">
-      <!-- Total Ready / Filled Stock -->
-      <div class="kpi-card income">
-        <div class="kpi-header">
-          <span class="kpi-title">Galon Siap Jual (Isi)</span>
-          <div class="kpi-icon-wrap">
-            <i data-lucide="droplets"></i>
-          </div>
-        </div>
-        <div id="kpiStockFilled" class="kpi-value heading-font">0 Galon</div>
-        <div class="kpi-footer">
-          <span>Stok fisik terisi di depot</span>
-          <span class="kpi-tag" style="color: var(--primary-600);">Siap Jual</span>
-        </div>
-      </div>
-
-      <!-- Total Gallons Out (Sold / Borrowed) -->
-      <div class="kpi-card expense">
-        <div class="kpi-header">
-          <span class="kpi-title">Total Galon Keluar</span>
-          <div class="kpi-icon-wrap">
-            <i data-lucide="arrow-up-right"></i>
-          </div>
-        </div>
-        <div id="kpiTotalGallonsOut" class="kpi-value heading-font">0 Galon</div>
-        <div class="kpi-footer">
-          <span id="kpiTxCount">0 catatan mutasi</span>
-          <span class="kpi-tag" style="color: var(--danger-600);">Keluar (-)</span>
-        </div>
-      </div>
-
-      <!-- Total Gallons In (Supply / Return) -->
-      <div class="kpi-card volume">
-        <div class="kpi-header">
-          <span class="kpi-title">Total Galon Masuk</span>
-          <div class="kpi-icon-wrap">
-            <i data-lucide="arrow-down-left"></i>
-          </div>
-        </div>
-        <div id="kpiTotalGallonsIn" class="kpi-value heading-font">0 Galon</div>
-        <div class="kpi-footer">
-          <span>Pasokan baru & pengembalian</span>
-          <span class="kpi-tag" style="color: var(--success-600);">Masuk (+)</span>
-        </div>
-      </div>
-
-      <!-- Gallon Borrowed / Empty Summary -->
-      <div class="kpi-card profit">
-        <div class="kpi-header">
-          <span class="kpi-title">Galon Dipinjam Pelanggan</span>
-          <div class="kpi-icon-wrap">
-            <i data-lucide="users"></i>
-          </div>
-        </div>
-        <div id="kpiStockBorrowed" class="kpi-value heading-font">0 Galon</div>
-        <div class="kpi-footer">
-          <span>Sedang berada di pelanggan</span>
-          <span id="kpiStockEmptySummary" class="kpi-tag" style="color: var(--purple-500);">0 Kosong</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Multi-Dimensional Filter Control Panel -->
-    <section class="filter-panel">
-      <div class="filter-panel-header">
-        <div class="filter-heading">
-          <i data-lucide="sliders-horizontal" style="color: var(--primary-500); width: 18px; height: 18px;"></i>
-          <span>Filter Periode Waktu & Kategori</span>
-          <span id="activeFilterDescriptionBadge" class="active-filter-badge">Periode: Bulan Ini</span>
-        </div>
-
-        <!-- Mode Waktu Selector Tabs -->
-        <div class="filter-tabs">
-          <button class="filter-tab-btn active" data-mode="quick">
-            <i data-lucide="clock" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Cepat
-          </button>
-          <button class="filter-tab-btn" data-mode="date">
-            <i data-lucide="calendar" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Tanggal
-          </button>
-          <button class="filter-tab-btn" data-mode="day">
-            <i data-lucide="calendar-days" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Hari
-          </button>
-          <button class="filter-tab-btn" data-mode="month">
-            <i data-lucide="calendar-range" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Bulan
-          </button>
-          <button class="filter-tab-btn" data-mode="year">
-            <i data-lucide="history" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i> Tahun
-          </button>
-        </div>
-      </div>
-
-      <!-- Filter Controls Inputs Grid -->
-      <div class="filter-controls-grid">
-        <!-- 1. Quick Preset Dropdown -->
-        <div id="quickPresetWrap" class="form-group">
-          <label class="form-label">Preset Periode Cepat</label>
-          <select id="filterQuickPreset" class="form-select">
-            <option value="today">Hari Ini</option>
-            <option value="yesterday">Kemarin</option>
-            <option value="last7days">7 Hari Terakhir</option>
-            <option value="thisMonth" selected>Bulan Ini</option>
-            <option value="lastMonth">Bulan Lalu</option>
-            <option value="thisYear">Tahun Ini</option>
-            <option value="all">Semua Waktu (Semua Data)</option>
-          </select>
-        </div>
-
-        <!-- 2. Date Range Inputs (Hidden by default, shown when mode = 'date') -->
-        <div id="dateRangeWrap" style="display: none; grid-column: span 2; display: none; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div class="form-group">
-            <label class="form-label">Dari Tanggal</label>
-            <input type="date" id="filterStartDate" class="form-control">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Sampai Tanggal</label>
-            <input type="date" id="filterEndDate" class="form-control">
-          </div>
-        </div>
-
-        <!-- 3. Month & Year Select (Hidden by default, shown when mode = 'month' or 'year') -->
-        <div id="monthYearWrap" style="display: none; grid-column: span 2; display: none; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div id="monthSelectGroup" class="form-group">
-            <label class="form-label">Pilih Bulan</label>
-            <select id="filterMonthSelect" class="form-select">
-              <option value="1">Januari</option>
-              <option value="2">Februari</option>
-              <option value="3">Maret</option>
-              <option value="4">April</option>
-              <option value="5">Mei</option>
-              <option value="6">Juni</option>
-              <option value="7">Juli</option>
-              <option value="8" selected>Agustus</option>
-              <option value="9">September</option>
-              <option value="10">Oktober</option>
-              <option value="11">November</option>
-              <option value="12">Desember</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pilih Tahun</label>
-            <select id="filterYearSelect" class="form-select">
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026" selected>2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 4. Category Filter -->
-        <div class="form-group">
-          <label class="form-label">Kategori Mutasi</label>
-          <select id="filterCategorySelect" class="form-select">
-            <option value="all">Semua Kategori</option>
-          </select>
-        </div>
-
-        <!-- 5. Search Input -->
-        <div class="form-group" style="grid-column: span 2;">
-          <label class="form-label">Cari Nama Pelanggan / Vendor / Catatan</label>
-          <input type="text" id="filterSearchInput" class="form-control" placeholder="Ketik nama pelanggan, pengantar, atau catatan...">
-        </div>
-
-        <!-- Reset Button -->
-        <div class="form-group" style="justify-content: flex-end;">
-          <button id="btnResetFilter" class="btn btn-outline" style="width: 100%;">
-            <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i> Reset Filter
-          </button>
-        </div>
-      </div>
-
-      <!-- Day of Week Quick Filter Pill Group (Shown when mode = 'day') -->
-      <div id="dayFilterWrap" style="display: none;" class="days-filter-group">
-        <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); align-self: center; margin-right: 0.35rem;">PILIH HARI:</span>
-        <button class="day-pill-btn active" data-day="all">Semua Hari</button>
-        <button class="day-pill-btn" data-day="Senin">Senin</button>
-        <button class="day-pill-btn" data-day="Selasa">Selasa</button>
-        <button class="day-pill-btn" data-day="Rabu">Rabu</button>
-        <button class="day-pill-btn" data-day="Kamis">Kamis</button>
-        <button class="day-pill-btn" data-day="Jumat">Jumat</button>
-        <button class="day-pill-btn" data-day="Sabtu">Sabtu</button>
-        <button class="day-pill-btn" data-day="Minggu">Minggu</button>
-      </div>
-    </section>
-
-    <!-- Gallon Inventory Tracker Card -->
-    <section class="inventory-card">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <i data-lucide="boxes" style="color: var(--primary-500); width: 18px; height: 18px;"></i>
-          <h4 style="font-size: 0.95rem; font-weight: 700;">Status Stok Fisik Galon Depot</h4>
-        </div>
-        <button id="btnEditInventory" class="btn btn-outline btn-sm">
-          <i data-lucide="edit-2" style="width: 13px; height: 13px;"></i> Kelola Stok Fisik
-        </button>
-      </div>
-
-      <div class="inventory-items-grid">
-        <div class="inventory-item filled">
-          <div class="inventory-icon"><i data-lucide="droplet"></i></div>
-          <div class="inventory-info">
-            <h5>Galon Siap Jual (Isi)</h5>
-            <div id="stockFilledDisplay" class="count heading-font">0 Galon</div>
-          </div>
-        </div>
-        <div class="inventory-item empty">
-          <div class="inventory-icon"><i data-lucide="disc"></i></div>
-          <div class="inventory-info">
-            <h5>Galon Kosong (Siap Isi)</h5>
-            <div id="stockEmptyDisplay" class="count heading-font">0 Galon</div>
-          </div>
-        </div>
-        <div class="inventory-item borrowed">
-          <div class="inventory-icon"><i data-lucide="users"></i></div>
-          <div class="inventory-info">
-            <h5>Galon Dipinjam (Pelanggan)</h5>
-            <div id="stockBorrowedDisplay" class="count heading-font">0 Galon</div>
-          </div>
-        </div>
-        <div class="inventory-item broken">
-          <div class="inventory-icon"><i data-lucide="alert-triangle"></i></div>
-          <div class="inventory-info">
-            <h5>Galon Rusak / Afkir</h5>
-            <div id="stockBrokenDisplay" class="count heading-font">0 Galon</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Analytics & Charts Grid -->
-    <section class="charts-grid">
-      <!-- Main Trend Line Chart -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">
-            <i data-lucide="trending-up" style="color: var(--primary-500);"></i>
-            <span>Tren Mutasi Galon (Keluar vs Masuk)</span>
-          </div>
-        </div>
-        <div class="chart-canvas-wrap">
-          <canvas id="trendChartCanvas"></canvas>
-        </div>
-      </div>
-
-      <!-- Category Breakdown Doughnut Chart -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div id="categoryChartTitle" class="chart-title">
-            <i data-lucide="pie-chart" style="color: var(--primary-500);"></i>
-            <span>Distribusi Volume Galon per Kategori</span>
-          </div>
-        </div>
-        <div class="chart-canvas-wrap">
-          <canvas id="categoryChartCanvas"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- Data Table & CRUD Section -->
-    <section class="table-section">
-      <div class="table-action-bar">
-        <div class="table-title-group">
-          <i data-lucide="clipboard-list" style="color: var(--primary-500);"></i>
-          <h3 class="table-title">Riwayat Catatan Mutasi Galon</h3>
-          <span id="tableCountBadge" class="table-count-badge">0 Data</span>
-        </div>
-
-        <!-- Type Filter Tabs (Semua / Keluar / Masuk) -->
-        <div class="filter-tabs">
-          <button class="filter-tab-btn type-filter-btn active" data-type="all">Semua</button>
-          <button class="filter-tab-btn type-filter-btn" data-type="keluar">Galon Keluar (-)</button>
-          <button class="filter-tab-btn type-filter-btn" data-type="masuk">Galon Masuk (+)</button>
-        </div>
-
-        <!-- Action Buttons (Add, Export, Print) -->
-        <div class="table-buttons-group">
-          <button id="btnExportExcel" class="btn btn-outline btn-sm" title="Ekspor ke spreadsheet Excel">
-            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--success-600);"></i> Excel
-          </button>
-          <button id="btnExportCSV" class="btn btn-outline btn-sm" title="Ekspor ke CSV">
-            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> CSV
-          </button>
-          <button id="btnPrintReport" class="btn btn-outline btn-sm" title="Cetak Laporan / PDF">
-            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Cetak Laporan
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="openTransactionModal()">
-            <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> Catat Mutasi
-          </button>
-        </div>
-      </div>
-
-      <!-- Responsive Data Table -->
-      <div class="table-responsive">
-        <table id="transactionsTable" class="data-table">
-          <thead>
-            <tr>
-              <th>Tanggal & Waktu</th>
-              <th>Tipe Mutasi</th>
-              <th>Kategori Mutasi</th>
-              <th style="text-align: center;">Jumlah Galon</th>
-              <th>Pelanggan / Vendor</th>
-              <th>Keterangan / Catatan</th>
-              <th style="text-align: center;">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="transactionsTableBody">
-            <!-- Dynamically populated by app.js -->
-          </tbody>
-        </table>
-
-        <!-- Empty State -->
-        <div id="tableEmptyState" class="empty-state" style="display: none;">
-          <div class="empty-icon"><i data-lucide="inbox"></i></div>
-          <h4 class="empty-title">Belum Ada Catatan Mutasi Galon</h4>
-          <p class="empty-desc">Tidak ada data mutasi yang cocok dengan filter yang dipilih. Catat mutasi baru atau sesuaikan filter periode waktu.</p>
-          <button id="btnOpenAddTxEmpty" class="btn btn-primary">
-            <i data-lucide="plus-circle"></i> Catat Mutasi Galon
-          </button>
-        </div>
-      </div>
-
-      <!-- Table Footer with Pagination -->
-      <div id="tableFooter" class="table-footer">
-        <span id="paginationInfo">Menampilkan 1-10 dari 0 data</span>
-        <div class="pagination-controls">
-          <button id="btnPrevPage" class="btn btn-outline btn-sm" disabled>
-            <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i> Sebelumnya
-          </button>
-          <button id="btnNextPage" class="btn btn-outline btn-sm">
-            Selanjutnya <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-          </button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- App Footer -->
-  <footer class="app-footer">
-    <div class="container">
-      <p><strong>AquaFlow</strong> &copy; 2026 - Sistem Pencatatan & Manajemen Stok Galon Depot Air Minum. Terhubung dengan Database Supabase & Siap Deploy ke Vercel.</p>
-    </div>
-  </footer>
-
-  <!-- ========================================================================
-       MODALS
-       ======================================================================== -->
-
-  <!-- 1. MODAL TAMBAH / EDIT MUTASI STOK -->
-  <div id="transactionModal" class="modal-backdrop">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 id="txModalTitle" class="modal-title">
-          <i data-lucide="plus-circle"></i> Catat Mutasi Galon
-        </h3>
-        <button class="modal-close" onclick="closeModal('transactionModal')">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-
-      <form id="transactionForm">
-        <div class="modal-body">
-          <!-- Type Switcher (Galon Keluar vs Galon Masuk) -->
-          <div class="type-switch-group">
-            <input type="radio" id="typeOut" name="txType" value="keluar" class="type-switch-input" checked>
-            <label for="typeOut" class="type-switch-label out-label">
-              <i data-lucide="arrow-up-right"></i> Galon Keluar (-)
-            </label>
-
-            <input type="radio" id="typeIn" name="txType" value="masuk" class="type-switch-input">
-            <label for="typeIn" class="type-switch-label in-label">
-              <i data-lucide="arrow-down-left"></i> Galon Masuk (+)
-            </label>
-          </div>
-
-          <!-- Date & Time Row -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div class="form-group">
-              <label class="form-label">Tanggal Transaksi *</label>
-              <input type="date" id="txDate" class="form-control" required>
+    <!-- ======================= MODAL HAPUS ======================= -->
+    <dialog id="deleteModal" class="w-full max-w-sm rounded-xl bg-surface-container-lowest p-0 text-on-surface">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-on-error-container text-[20px]">warning</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface">Hapus Transaksi?</h3>
             </div>
-            <div class="form-group">
-              <label class="form-label">Waktu / Jam</label>
-              <input type="time" id="txTime" class="form-control">
+            <p class="font-body-md text-body-md text-on-surface-variant mb-4">Data yang dihapus tidak dapat dipulihkan.
+            </p>
+            <div id="deleteDetails"
+                class="bg-surface-container-highest rounded p-3 font-body-md text-body-md text-on-surface mb-6"></div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="deleteModal.close()"
+                    class="px-5 py-3 rounded border border-outline-variant font-label-md text-label-md uppercase tracking-wider text-on-surface hover:bg-surface-container-high transition-colors">Batal</button>
+                <button id="btnConfirmDelete"
+                    class="px-5 py-3 rounded bg-error text-on-error font-label-md text-label-md uppercase tracking-wider hover:bg-error/90 transition-colors">Hapus</button>
             </div>
-          </div>
-
-          <!-- Category Selection -->
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Kategori Mutasi *</label>
-            <select id="txCategory" class="form-select" required>
-              <!-- Populated dynamically based on type -->
-            </select>
-          </div>
-
-          <!-- Gallon Qty Input -->
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Jumlah Galon (Qty) *</label>
-            <input type="number" id="txQty" class="form-control" min="1" value="1" required placeholder="Masukkan jumlah galon (contoh: 5)">
-          </div>
-
-          <!-- Customer Name & Notes -->
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Nama Pelanggan / Vendor / Pengantar (Opsional)</label>
-            <input type="text" id="txCustomer" class="form-control" placeholder="Contoh: Bu Siti / Toko Barokah / Kurir Budi">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Catatan / Keterangan Tambahan</label>
-            <input type="text" id="txNotes" class="form-control" placeholder="Contoh: Pengiriman blok C no 4 (tukar galon)">
-          </div>
         </div>
+    </dialog>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('transactionModal')">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Simpan Catatan Mutasi
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- 2. MODAL KONFIRMASI HAPUS -->
-  <div id="deleteModal" class="modal-backdrop">
-    <div class="modal-dialog" style="max-width: 420px;">
-      <div class="modal-header">
-        <h3 class="modal-title" style="color: var(--danger-600);">
-          <i data-lucide="alert-triangle"></i> Hapus Catatan Mutasi?
-        </h3>
-        <button class="modal-close" onclick="closeModal('deleteModal')">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
-          Apakah Anda yakin ingin menghapus catatan mutasi stok ini? Data yang telah dihapus tidak dapat dipulihkan.
-        </p>
-        <div id="deleteTxDetails" style="background-color: var(--bg-muted); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.82rem;">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('deleteModal')">Batal</button>
-        <button type="button" id="btnConfirmDelete" class="btn" style="background-color: var(--danger-600); color: white;">
-          <i data-lucide="trash-2"></i> Ya, Hapus
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. MODAL KELOLA INVENTARIS STOK FISIK GALON -->
-  <div id="inventoryModal" class="modal-backdrop">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 class="modal-title">
-          <i data-lucide="boxes"></i> Kelola Jumlah Stok Fisik Galon
-        </h3>
-        <button class="modal-close" onclick="closeModal('inventoryModal')">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-
-      <form id="inventoryForm">
-        <div class="modal-body">
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Sesuaikan jumlah fisik galon yang ada di depot secara manual jika terdapat perbedaan stok fisik (stok opname).
-          </p>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Galon Siap Jual (Isi)</label>
-              <input type="number" id="invStockFilled" class="form-control" min="0" required>
+    <!-- ======================= AUTH OVERLAY ======================= -->
+    <div id="authOverlay"
+        class="fixed inset-0 z-[90] bg-background hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-sm   p-8 my-auto">
+            <div class="flex flex-col items-center text-center mb-2">
+                <div class="w-18 h-18 rounded-full  flex items-center justify-center mb-2">
+                    <img src="https://img.icons8.com/?size=100&id=vhXiAXW04PHU&format=png&color=000000" alt="Logo"
+                        class="w-full h-full object-contain">
+                </div>
+                <h1 class="font-headline-md text-headline-md text-primary tracking-tight">GalonTracker</h1>
+                <p class="font-body-md text-body-md text-on-surface-variant mt-1">Masuk untuk mengelola stok galon Anda
+                </p>
             </div>
-            <div class="form-group">
-              <label class="form-label">Galon Kosong (Siap Isi)</label>
-              <input type="number" id="invStockEmpty" class="form-control" min="0" required>
+
+            <div id="authAlert" class="hidden"></div>
+
+            <div class="grid grid-cols-2 gap-1 bg-surface-container-highest p-1 rounded-full mb-6">
+                <button type="button" id="tabLogin"
+                    class="py-2.5 rounded-full font-label-md text-label-md transition-colors bg-primary text-on-primary">Masuk</button>
+                <button type="button" id="tabRegister"
+                    class="py-2.5 rounded-full font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface">Daftar</button>
             </div>
-          </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-            <div class="form-group">
-              <label class="form-label">Galon Dipinjam (Pelanggan)</label>
-              <input type="number" id="invStockBorrowed" class="form-control" min="0" required>
+            <form id="authForm" novalidate>
+                <div id="authNameGroup" class="mb-4 hidden">
+                    <label for="authNameInput"
+                        class="block font-label-md text-label-md text-on-surface-variant mb-2">Nama Lengkap / Nama
+                        Depot</label>
+                    <input id="authNameInput" type="text" placeholder="Contoh: Depot Air Sejahtera" autocomplete="name"
+                        class="w-full bg-surface-container-highest border-none px-4 py-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div class="mb-4">
+                    <label for="authIdInput" class="block font-label-md text-label-md text-on-surface-variant mb-2">ID
+                        Pengguna</label>
+                    <input id="authIdInput" type="text" required placeholder="Contoh: depot01" autocomplete="off"
+                        spellcheck="false"
+                        class="w-full bg-surface-container-highest border-none px-4 py-3 rounded text-on-surface font-body-md text-body-md focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div class="mb-6">
+                    <label for="authPinInput"
+                        class="block font-label-md text-label-md text-on-surface-variant mb-2">PIN</label>
+                    <div class="relative">
+                        <input id="authPinInput" type="password" required inputmode="numeric" pattern="[0-9]*"
+                            maxlength="8" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off"
+                            class="w-full bg-surface-container-highest border-none pl-4 pr-12 py-3 rounded text-on-surface font-data-mono text-data-mono tracking-[0.3em] focus:ring-1 focus:ring-primary outline-none">
+                        <button type="button" id="btnTogglePassword" title="Lihat PIN"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                            <span id="pwdToggleIcon" class="material-symbols-outlined text-[20px]">visibility</span>
+                        </button>
+                    </div>
+                    <p class="mt-2 font-label-sm text-label-sm text-on-surface-variant">PIN terdiri dari 6&ndash;8
+                        angka.</p>
+                </div>
+                <button id="btnAuthSubmit" type="submit"
+                    class="w-full bg-primary text-on-primary py-3 rounded font-label-md text-label-md uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span id="btnAuthIcon" class="material-symbols-outlined text-[16px]">login</span>
+                    <span id="btnAuthText">Masuk ke Dashboard</span>
+                </button>
+            </form>
+
+            <div class="flex items-center gap-3 my-5">
+                <div class="flex-1 h-px bg-outline-variant/50"></div>
+                <span class="font-label-sm text-label-sm text-outline">atau</span>
+                <div class="flex-1 h-px bg-outline-variant/50"></div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Galon Rusak / Pecah / Afkir</label>
-              <input type="number" id="invStockBroken" class="form-control" min="0" required>
-            </div>
-          </div>
-        </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('inventoryModal')">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Simpan Stok Fisik
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- 4. MODAL KONFIGURASI SUPABASE DATABASE & BACKUP -->
-  <div id="databaseModal" class="modal-backdrop">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 class="modal-title">
-          <i data-lucide="database"></i> Pengaturan Database Supabase
-        </h3>
-        <button class="modal-close" onclick="closeModal('databaseModal')">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-
-      <form id="dbConfigForm">
-        <div class="modal-body">
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Hubungkan aplikasi dengan database cloud <strong>Supabase</strong> agar catatan mutasi & stok galon tersimpan secara permanen dan dapat diakses bersama secara real-time.
-          </p>
-
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label">Supabase Project URL</label>
-            <input type="url" id="supabaseUrlInput" class="form-control" placeholder="https://xyzcompany.supabase.co">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label">Supabase Anon Key</label>
-            <input type="password" id="supabaseKeyInput" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-            <button type="button" id="btnTestDbConnection" class="btn btn-outline btn-sm">
-              <i data-lucide="activity"></i> Tes Koneksi
+            <button type="button" id="btnGuestLogin"
+                class="w-full border border-outline-variant py-3 rounded font-label-md text-label-md uppercase tracking-wider text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">person_outline</span> Masuk sebagai Tamu
             </button>
-            <button type="button" id="btnSyncCloud" class="btn btn-outline btn-sm" title="Upload data dari browser lokal ke Supabase">
-              <i data-lucide="upload-cloud"></i> Sinkronkan Data Lokal ke Cloud
-            </button>
-            <button type="button" id="btnUseLocalDb" class="btn btn-outline btn-sm" title="Gunakan mode offline LocalStorage">
-              <i data-lucide="hard-drive"></i> Mode Lokal
-            </button>
-          </div>
-
-          <div id="dbTestResult" style="margin-bottom: 1rem;"></div>
-
-          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
-
-          <!-- Backup & Restore Section -->
-          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
-            Cadangkan / Pulihkan Data Lokal (JSON)
-          </h4>
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <button type="button" id="btnBackupJson" class="btn btn-outline btn-sm">
-              <i data-lucide="download"></i> Unduh Cadangan (Backup JSON)
-            </button>
-            <label class="btn btn-outline btn-sm" style="margin: 0; cursor: pointer;">
-              <i data-lucide="upload"></i> Pulihkan dari JSON
-              <input type="file" id="fileRestoreInput" accept=".json" style="display: none;">
-            </label>
-          </div>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('databaseModal')">Tutup</button>
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="save"></i> Simpan Konfigurasi
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <!-- 5. MODAL PANDUAN & BANTUAN SUPABASE -->
-  <div id="helpModal" class="modal-backdrop">
-    <div class="modal-dialog" style="max-width: 680px;">
-      <div class="modal-header">
-        <h3 class="modal-title">
-          <i data-lucide="book-open"></i> Panduan Setup Supabase & Deploy Vercel
-        </h3>
-        <button class="modal-close" onclick="closeModal('helpModal')">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
+    <!-- Toast container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 items-end"></div>
 
-      <div class="modal-body" style="font-size: 0.88rem; line-height: 1.6;">
-        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
-          1. Cara Menyiapkan Database & Autentikasi di Supabase
-        </h4>
-        <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
-          <li>Buka <a href="https://supabase.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">supabase.com</a> dan buat akun / proyek baru gratis.</li>
-          <li>Masuk ke menu <strong>SQL Editor</strong> di dashboard Supabase.</li>
-          <li>Klik <strong>New Query</strong>, lalu salin dan jalankan seluruh isi file <code>supabase_schema.sql</code> yang ada di folder proyek ini.</li>
-          <li>Buka <strong>Project Settings -> API</strong>, lalu salin <code>Project URL</code> dan <code>anon public API key</code>.</li>
-          <li>Masukkan kedua nilai tersebut ke dalam modal <strong>Pengaturan Database</strong> di aplikasi ini atau di file <code>env.js</code>.</li>
-          <li>Buka <strong>Authentication -> Providers -> Email</strong> di Supabase: Anda dapat menonaktifkan <em>Confirm email</em> agar registrasi akun baru bisa langsung login seketika.</li>
-        </ol>
-
-        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
-          2. Cara Deploy ke Vercel (1-Click)
-        </h4>
-        <ol style="margin-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
-          <li>Unggah folder proyek ini ke akun GitHub Anda.</li>
-          <li>Buka <a href="https://vercel.com" target="_blank" style="color: var(--primary-500); font-weight: 600;">vercel.com</a>, lalu klik <strong>Add New... -> Project</strong>.</li>
-          <li>Pilih repository GitHub Anda dan klik <strong>Deploy</strong> (Tanpa konfigurasi khusus, file <code>vercel.json</code> sudah otomatis aktif).</li>
-        </ol>
-
-        <h4 style="font-weight: 700; color: var(--primary-600); margin-bottom: 0.4rem;">
-          3. Fitur Filter Waktu & Rekapitulasi Stok
-        </h4>
-        <p style="color: var(--text-muted);">
-          Gunakan filter di panel atas untuk melihat tren pergerakan stok galon berdasarkan <strong>Hari</strong> (misal performa penjualan tiap hari Sabtu/Minggu), <strong>Bulan</strong>, <strong>Tahun</strong>, atau <strong>Rentang Tanggal Kustom</strong>.
-        </p>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="closeModal('helpModal')">Mengerti</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- Application Environment & Logic Scripts -->
-  <script src="env.js"></script>
-  <script src="js/filter.js"></script>
-  <script src="js/supabase-client.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/app.js"></script>
+    <script src="env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
 </body>
+
 </html>
