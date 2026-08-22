@@ -59,6 +59,14 @@ function toast(message, type = 'info') {
   }, 3200);
 }
 
+function setSidebar(open) {
+  const sidebar = $('sidebar');
+  const backdrop = $('sidebarBackdrop');
+  if (!sidebar) return;
+  sidebar.classList.toggle('-translate-x-full', !open);
+  if (backdrop) backdrop.classList.toggle('hidden', !open);
+}
+
 function switchView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   const view = $(`view-${name}`);
@@ -78,6 +86,7 @@ function switchView(name) {
     else a.removeAttribute('aria-current');
   });
 
+  setSidebar(false);
   window.scrollTo({ top: 0 });
 }
 
@@ -715,6 +724,13 @@ async function initAuth() {
 }
 
 function bindEvents() {
+  $('btnSidebarToggle').addEventListener('click', () => setSidebar(true));
+  $('btnCloseSidebar').addEventListener('click', () => setSidebar(false));
+  $('sidebarBackdrop').addEventListener('click', () => setSidebar(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setSidebar(false);
+  });
+
   document.querySelectorAll('[data-nav]').forEach((a) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
