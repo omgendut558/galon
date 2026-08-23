@@ -599,12 +599,14 @@ function applyReadOnlyUi() {
 
 async function enterApp(user) {
   state.user = user || null;
+  state.isGuest = !!user?.isGuest;
+  DB.currentUser = user || null;
   applyUserProfile(user);
   applyReadOnlyUi();
   hideAuthOverlay();
   if (user && !user.isGuest && DB.client) DB.saveSession(user);
-  loadDashboard();
-  loadTransactions();
+  await loadDashboard();
+  await loadTransactions();
   initConnectionStatus();
 }
 
@@ -616,6 +618,9 @@ function resetPinVisibility() {
 function lockApp() {
   state.user = null;
   state.isGuest = false;
+  state.inventory = null;
+  state.currentRows = [];
+  state.total = 0;
   DB.signOut();
   applyUserProfile({ fullName: 'Admin User', isGuest: true });
   applyReadOnlyUi();
@@ -624,6 +629,14 @@ function lockApp() {
   $('authForm').reset();
   resetPinVisibility();
   hideAuthAlert();
+  
+  if ($('txTbody')) $('txTbody').innerHTML = '';
+  if ($('recentTbody')) $('recentTbody').innerHTML = '';
+  if ($('kpiFilled')) $('kpiFilled').textContent = '0';
+  if ($('kpiEmptyDisplay')) $('kpiEmptyDisplay').textContent = '0';
+  if ($('kpiEmptyInput')) $('kpiEmptyInput').value = '0';
+  if ($('kpiInToday')) $('kpiInToday').textContent = '0';
+  if ($('kpiOutToday')) $('kpiOutToday').textContent = '0';
 }
 
 async function handleAuthSubmit(e) {
